@@ -1,0 +1,1 @@
+shinyUI(uiOutput("mode"))
