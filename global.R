@@ -2,6 +2,7 @@
 # LIBRARY
 ################################
 library(shiny)
+library(shinyjs)
 library(shinythemes)
 library(DBI)
 library(RMySQL)
@@ -10,13 +11,20 @@ library(stringr)
 ################################
 # MODULES
 ################################
-source("guest/guest.R")
-source("user/user.R")
-source("guest/modules/auth/signUp.R")
-source("guest/modules/auth/logIn.R")
-source("guest/tabs/ui/signUpTab.R")
-source("guest/tabs/ui/logInTab.R")
-source("guest/tabs/ui/homeTab.R")
+source("views/guest/guest.R")
+source("views/user/user.R")
+source("views/guest/modules/auth/signUp.R")
+source("views/guest/modules/auth/logIn.R")
+source("views/guest/tabs/ui/signUpTab.R")
+source("views/guest/tabs/ui/logInTab.R")
+source("views/guest/tabs/ui/homeTab.R")
+source("views/user/tabs/ui/myModelsTab.R")
+source("views/user/tabs/ui/myDatasetsTab.R")
+source("views/user/tabs/ui/communityTab.R")
+source("views/user/tabs/ui/perfilTab.R")
+source("views/user/tabs/ui/logOutTab.R")
+source("views/user/modules/datasets/newDataset.R")
+source("views/user/modules/datasets/myDatasets.R")
 
 ################################
 # DATABASE

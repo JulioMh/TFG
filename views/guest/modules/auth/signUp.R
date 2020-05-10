@@ -26,18 +26,8 @@ signUpUI <- function(id) {
           placeholder = "Confirm password",
           label = tagList(icon("unlock-alt"), "Confirm password")
         ),
-        textOutput(ns("warning")),
         br(),
-        div(
-          style = "text-align: center;",
-          actionButton(
-            ns("signup"),
-            "SIGN UP",
-            style = "color: white;padding: 10px 15px; width: 150px; cursor: pointer;
-                                 font-size: 18px; font-weight: 600;"
-          ),
-          br(),
-        ),
+        uiOutput(ns("submit")),
         br(),
         br(),
         textOutput(ns("res")),
@@ -47,43 +37,43 @@ signUpUI <- function(id) {
   )
 }
 
-signUp <- function(input, output, session) {
+signUp <- function(input, output, session, USER) {
   emailRejex <-
     "^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$"
   passRejex <- "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{6,}$"
-
   
-  output$warning <- renderText({
+  output$submit <- renderUI({
     validate(
       need(input$userName != "", label = "User name"),
       need(str_detect(input$email, regex(emailRejex)), message = "Email isn't correct"),
       need(str_detect(input$passwd, regex(passRejex)), message = "Password must has at least 6 characters, one number, one uppercase and one lowecase"),
       need(input$passwd == input$confPasswd, message = "Passwords must match")
     )
+    return(div(
+      style = "text-align: center;",
+      actionButton(
+        session$ns("signup"),
+        "SIGN UP",
+        style = "color: white;padding: 10px 15px; width: 150px; cursor: pointer;
+                                 font-size: 18px; font-weight: 600;"
+      ),
+      br(),
+    ))
   })
   
   observeEvent(input$signup, isolate({
-    if (validateFields(input, emailRejex, passRejex)) {
-      data <- list(
-        "username" = input$userName,
-        "password" = input$passwd,
-        "email" = input$email
-      )
-      res <- performanceSignUp(data)
-      output$res <- renderText(res)
+    data <- list(
+      "username" = input$userName,
+      "password" = input$passwd,
+      "email" = input$email
+    )
+    res <- performanceSignUp(data)
+    output$res <- renderText(res)
+    if (res == "Welcome!") {
+      USER$logged <- TRUE
+      USER$userName <- data$username
     }
   }))
-}
-
-validateFields <- function(input, emailRejex, passRejex) {
-  res <- TRUE
-  if (input$userName == '' ||
-      !str_detect(input$email, regex(emailRejex)) ||
-      input$confPasswd != input$passwd ||
-      !str_detect(input$passwd, regex(passRejex))) {
-    res <- FALSE
-  }
-  return(res)
 }
 
 performanceSignUp <- function(data) {
