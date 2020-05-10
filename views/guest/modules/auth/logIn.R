@@ -71,7 +71,11 @@ performanceLogIn <- function(userName, password) {
     sprintf("select * from User where userName= '%s' and password = '%s'",
             userName,
             password)
-  response <- dbGetQuery(db, query)
+  tryCatch({
+    response <- dbGetQuery(db, query)
+  }, error = function(e) {
+    stop(safeError(e))
+  })
   if (nrow(response) == 0) {
     res <- "Wrong user or password"
   } else{

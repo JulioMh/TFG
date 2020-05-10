@@ -95,8 +95,8 @@ performanceSignUp <- function(data) {
   )
   tryCatch({
     dbGetQuery(db, query)
-  }, error = function(res) {
-    res <- "Something went worng"
+  }, error = function(e) {
+    stop(safeError(e))
   })
   dbDisconnect(db)
   return(res)

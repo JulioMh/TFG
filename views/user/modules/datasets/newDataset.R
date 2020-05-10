@@ -21,6 +21,8 @@ newDatasetUI <- function (id) {
 }
 
 newDataset <- function (input, output, session, USER) {
+  dataset <- reactiveValues(content = "")
+  
   output$submit <- renderUI({
     validate(need(input$dataset != "", label = "File"),
              need(input$name != "", label = "Name"))
@@ -31,7 +33,7 @@ newDataset <- function (input, output, session, USER) {
   observeEvent(input$submit, {
     data <- list("name" = input$name,
                  "description" = input$description,
-                 "file" = paste(input$dataset$datapath),
+                 "file" = dataset$content,
                  "user_id" = USER$id)
     res <- performanceDatasetSave(data)
     output$err <- renderText(res)
@@ -44,13 +46,13 @@ newDataset <- function (input, output, session, USER) {
   output$tablePrev <- DT::renderDataTable({
     req(input$dataset)
     tryCatch({
-      ds <- read.csv(input$dataset$datapath)
+      dataset$content <- read.csv(input$dataset$datapath)
     },
     error = function(e) {
       stop(safeError(e))
     })
     
-    return(DT::datatable(ds, options = list(
+    return(DT::datatable(dataset$content, options = list(
       lengthMenu = list(c(5, 15, -1), c('5', '10', 'All')),
       pageLength = 10
     )))
@@ -76,8 +78,8 @@ performanceDatasetSave <- function(data){
   )
   tryCatch({
     dbGetQuery(db, query)
-  }, error = function(res) {
-    res <- "Something went worng"
+  }, error = function(e) {
+    stop(safeError(e))
   })
   dbDisconnect(db)
   return(res)

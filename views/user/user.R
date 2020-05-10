@@ -4,10 +4,15 @@ userUI <- function(id) {
     navbarPage(
       title = "BestAppEver",
       theme = shinytheme("cosmo"),
-      myModelsTab,
-      myDatasetsTab,
-      communityTab,
-      perfilTab,
-      logOutTab
+      tabPanel("MyModels", 
+               h1("TODO")),
+      tabPanel("MyDatasets", 
+               myDatasetsUI("mydatasets")),
+      tabPanel("Community", 
+               h2("TODO")),
+      tabPanel("Perfil", 
+               h3("TODO")),
+      tabPanel("Log out", 
+               h4("TODO"))
     ))
 }
