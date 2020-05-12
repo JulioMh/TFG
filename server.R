@@ -1,14 +1,11 @@
 shinyServer(function(input, output, session){
-  logged = FALSE
-  USER <- reactiveValues(logged = logged, id=0)
+  session$userData$user <- reactiveValues(id = -1, dataset="")
   output$mode <- renderUI({
-    if(USER$logged){
-      callModule(newDataset, "fromDataset", USER)
-      callModule(myDatasets, "mydatasets", USER)
+    if(session$userData$user$id > 0){
+      callModule(user, "user")
       userUI("user")
     }else{
-      callModule(signUp, "signup", USER)
-      callModule(logIn, "login", USER)
+      callModule(guest, "guest")
       guestUI("guest")
     }
   })

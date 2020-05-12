@@ -27,7 +27,7 @@ logInUI <- function(id) {
   )
 }
 
-logIn <- function(input, output, session, USER) {
+logIn <- function(input, output, session) {
   output$submit <- renderUI({
     validate(
       need(input$userName != '', label = "User name"),
@@ -51,8 +51,7 @@ logIn <- function(input, output, session, USER) {
     if (is.null(nrow(res))) {
       output$res <- renderText(res)
     }else{
-      USER$logged <- TRUE
-      USER$id <- res$id
+      session$userData$user$id <- res$id
     }
   })
 }

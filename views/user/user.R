@@ -7,7 +7,7 @@ userUI <- function(id) {
       tabPanel("MyModels", 
                h1("TODO")),
       tabPanel("MyDatasets", 
-               myDatasetsUI("mydatasets")),
+               datasetsUI(ns("view"))),
       tabPanel("Community", 
                h2("TODO")),
       tabPanel("Perfil", 
@@ -15,4 +15,8 @@ userUI <- function(id) {
       tabPanel("Log out", 
                h4("TODO"))
     ))
+}
+
+user <- function(input, output, session){
+  callModule(datasets, "view")
 }

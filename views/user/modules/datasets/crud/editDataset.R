@@ -1,4 +1,4 @@
-newDatasetUI <- function (id) {
+editDatasetUI <- function (id) {
   ns <- NS(id)
   tagList(
     br(),
@@ -12,16 +12,14 @@ newDatasetUI <- function (id) {
       ),
       textInput(ns("name"), tagList(icon("signature"), "Nombre:")),
       textAreaInput(ns("description"), tagList(icon("signature"), "Descripcion:")),
-      uiOutput(ns("submit")),
-      br(),
-      textOutput(ns("err"))
+      uiOutput(ns("submit"))
     ),
     mainPanel(DT::dataTableOutput(ns("tablePrev")))
   )
 }
 
-newDataset <- function (input, output, session, USER) {
-  dataset <- reactiveValues(content = "")
+editDataset <- function (input, output, session) {
+  dataset <- reactiveValues(loadData(session$userData$dataset))
   
   output$submit <- renderUI({
     validate(need(input$dataset != "", label = "File"),
@@ -37,14 +35,14 @@ newDataset <- function (input, output, session, USER) {
                  "user_id" = USER$id)
     res <- performanceDatasetSave(data)
     output$err <- renderText(res)
-
+    
     if(res == "Something went worng"){
       output$err <- renderText(res)
     }
   })
   
   output$tablePrev <- DT::renderDataTable({
-    req(input$dataset)
+    req(data$content)
     tryCatch({
       dataset$content <- read.csv(input$dataset$datapath)
     },
@@ -59,7 +57,33 @@ newDataset <- function (input, output, session, USER) {
   })
 }
 
-performanceDatasetSave <- function(data){
+loadData <- function(name) {
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf("select * from Database where name= '%s'",
+            name)
+  tryCatch({
+    response <- dbGetQuery(db, query)
+  }, error = function(e) {
+    stop(safeError(e))
+  })
+  if (nrow(response) == 0) {
+    res <- "Wrong dataset name"
+  } else{
+    res <- response
+  }
+  dbDisconnect(db)
+  return(res)
+}
+uploadData <- function(data){
   db <-
     dbConnect(
       MySQL(),
