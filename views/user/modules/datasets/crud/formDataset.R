@@ -46,15 +46,11 @@ formDataset <- function (input, output, session, data, onClick) {
     submitedData <- list(
       "name" = input$name,
       "description" = input$description,
-      "file" = dataset$content,
+      "dataset" = dataset$content,
       "user_id" = session$userData$user$id
     )
     res <- onClick(submitedData)
     output$err <- renderText(res)
-    
-    if (res == "Something went worng") {
-      output$err <- renderText(res)
-    }
   })
   
   output$tablePrev <- DT::renderDataTable({

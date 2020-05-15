@@ -5,7 +5,7 @@ newDatasetUI <- function (id) {
 
 newDataset <- function (input, output, session) {
   data <- reactiveValues(name = "", description = "")
-  dataset <- callModule(formDataset, "new", data, create)
+  callModule(formDataset, "new", data, create)
 }
 
 create <- function(data){

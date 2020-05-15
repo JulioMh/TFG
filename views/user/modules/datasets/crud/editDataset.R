@@ -1,59 +1,19 @@
 editDatasetUI <- function (id) {
   ns <- NS(id)
-  tagList(
-    br(),
-    sidebarPanel(
-      fileInput(
-        ns("dataset"),
-        tagList(icon("file-medical-alt"), "Sube el conjunto de datos:"),
-        multiple = FALSE,
-        accept = c(".json",
-                   ".csv")
-      ),
-      textInput(ns("name"), tagList(icon("signature"), "Nombre:")),
-      textAreaInput(ns("description"), tagList(icon("signature"), "Descripcion:")),
-      uiOutput(ns("submit"))
-    ),
-    mainPanel(DT::dataTableOutput(ns("tablePrev")))
-  )
+  tagList(actionButton(ns("back"), "Go back"),
+          formDatasetUI(ns("edit")))
 }
 
-editDataset <- function (input, output, session) {
-  dataset <- reactiveValues(loadData(session$userData$dataset))
+editDataset <- function (input, output, session, v) {
+  dataset <- reactiveValues(id = session$userData$user$dataset, content = "")
   
-  output$submit <- renderUI({
-    validate(need(input$dataset != "", label = "File"),
-             need(input$name != "", label = "Name"))
-    return(div(style = "text-align: center;",
-               actionButton(session$ns("submit"), "Save")))
-  })
+  if(dataset$id != ""){
+    dataset$content <- loadData(dataset$id)
+    callModule(formDataset, "edit", dataset$content, update)
+  }
   
-  observeEvent(input$submit, {
-    data <- list("name" = input$name,
-                 "description" = input$description,
-                 "file" = dataset$content,
-                 "user_id" = USER$id)
-    res <- performanceDatasetSave(data)
-    output$err <- renderText(res)
-    
-    if(res == "Something went worng"){
-      output$err <- renderText(res)
-    }
-  })
-  
-  output$tablePrev <- DT::renderDataTable({
-    req(data$content)
-    tryCatch({
-      dataset$content <- read.csv(input$dataset$datapath)
-    },
-    error = function(e) {
-      stop(safeError(e))
-    })
-    
-    return(DT::datatable(dataset$content, options = list(
-      lengthMenu = list(c(5, 15, -1), c('5', '10', 'All')),
-      pageLength = 10
-    )))
+  observeEvent(input$back, {
+    v$doEdit = FALSE
   })
 }
 
@@ -68,7 +28,7 @@ loadData <- function(name) {
       password = options()$mysql$password
     )
   query <-
-    sprintf("select * from Database where name= '%s'",
+    sprintf("select * from Dataset where id= %s",
             name)
   tryCatch({
     response <- dbGetQuery(db, query)
@@ -83,7 +43,7 @@ loadData <- function(name) {
   dbDisconnect(db)
   return(res)
 }
-uploadData <- function(data){
+uploadData <- function(data) {
   db <-
     dbConnect(
       MySQL(),

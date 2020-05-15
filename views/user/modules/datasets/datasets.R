@@ -9,10 +9,13 @@ datasetsUI <- function (id) {
 }
 
 datasets <- function (input, output, session) {
+  v <- reactiveValues(doEdit = FALSE)
   callModule(newDataset, "new")
-  callModule(listDataset, "list")
+  callModule(listDataset, "list", v)
+  callModule(editDataset, "edit", v)
+  
   output$mode <- renderUI({
-    if (session$userData$user$dataset == "") {
+    if (v$doEdit == FALSE) {
       listDatasetUI(session$ns("list"))
     } else{
       editDatasetUI(session$ns("edit"))

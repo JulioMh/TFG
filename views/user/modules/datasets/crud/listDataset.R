@@ -3,18 +3,18 @@ listDatasetUI <- function (id) {
   tagList(br(), DT::dataTableOutput(ns("table")))
 }
 
-listDataset <- function(input, output, session) {
+listDataset <- function(input, output, session, v) {
+  datasets <- loadDatasets(session$userData$user$id)
   observeEvent(input$table_rows_selected, {
     index = input$table_rows_selected
-    if (length(index)) {
-      name <- datasets$list[[1, index]]
-      session$userData$user$dataset <- name
-    }
+    dataset_id <- datasets$id[index]
+    session$userData$user$dataset <- dataset_id
+    v$doEdit = TRUE
   })
   
   output$table <-
     DT::renderDataTable(
-      loadDatasets(session$userData$user$id),
+      datasets[2:3],
       options = list(lengthMenu = list(c(5, 10,-1), c('5', '10', 'All')),
                      pageLength = 10),
       selection = 'single',
@@ -32,7 +32,7 @@ loadDatasets <- function(id) {
       password = options()$mysql$password
     )
   query <-
-    sprintf("select name, description from Dataset where user_id= '%s'",
+    sprintf("select * from Dataset where user_id= '%s'",
             id)
   tryCatch({
     response <- dbGetQuery(db, query)
