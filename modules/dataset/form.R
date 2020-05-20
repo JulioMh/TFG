@@ -1,13 +1,12 @@
 formDatasetUI <- function (id) {
   ns <- NS(id)
-  tagList(br(),
-          sidebarPanel(uiOutput(ns("form")),
-                       br(),
-                       textOutput(ns("err"))),
-          mainPanel(DT::dataTableOutput(ns("tablePrev"))))
+  tagList(uiOutput(ns("form")),
+          br(),
+          textOutput(ns("err")))
 }
 
 formDataset <- function (input, output, session, data) {
+  result <- reactiveValues()
   output$form <- renderUI({
     tagList(
       fileInput(
@@ -31,6 +30,19 @@ formDataset <- function (input, output, session, data) {
     )
   })
   
+  observeEvent(input$submit, {
+    submitedData <- list(
+      "name" = input$name,
+      "description" = input$description,
+      "dataset" = input$dataset$datapath,
+      "user_id" = session$userData$user$id
+    )
+    res <- saveData(submitedData, "Dataset")
+    if(res){
+      output$err <- renderText(res)  
+    }
+  })
+  
   output$submit <- renderUI({
     validate(need(input$dataset != "", label = "File"),
              need(input$name != "", label = "Name"))
@@ -38,31 +50,7 @@ formDataset <- function (input, output, session, data) {
                actionButton(session$ns("submit"), "Save")))
   })
   
-  output$tablePrev <- DT::renderDataTable({
-    req(input$dataset$datapath)
-    tryCatch({
-      dataset <- reactive(read.csv(input$dataset$datapath))
-    },
-    error = function(e) {
-      stop(safeError(e))
-    })
-    
-    return(DT::datatable(dataset(),
-                         options = list(
-                           lengthMenu = list(c(5, 10, -1), c('5', '10', 'All')),
-                           pageLength = 10
-                         )))
-  })
-
-  return(
-    list(
-      "name" = reactive({input$name}),
-      "description" = reactive({input$description}),
-      "dataset" = dataset(),
-      "user_id" = session$userData$user$id,
-      "do_insert" = reactive({
-        input$submit
-      })
-    )
-  )
+  return(list(
+    path_dataset = reactive({input$dataset$datapath})
+  ))
 }

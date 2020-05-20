@@ -3,25 +3,17 @@ datasetUI <- function (id) {
   tagList(tabsetPanel(
     tabPanel("My datasets",
              uiOutput(ns("mode"))),
-    tabPanel("New dataset",
-             insertUI(ns("new")))
+    tabPanel(
+      "New dataset",
+      sidebarPanel(formDatasetUI(ns("new"))),
+      mainPanel(tableUI(ns("dataset")))
+    )
   ))
 }
 
 dataset <- function (input, output, session) {
-  v <- reactiveValues(doEdit = FALSE)
-  data <- reactiveValues(name = "", description = "")
-  callModule(insert, "new", formDatasetUI, formDataset, "Dataset", data)
-  callModule(listDataset, "list", v)
-  callModule(editDataset, "edit", v)
+  edit <- reactiveValues(name = "", description = "", doEdit = FALSE)
   
-  output$mode <- renderUI({
-    if (v$doEdit == FALSE) {
-      listDatasetUI(session$ns("list"))
-    } else{
-      editDatasetUI(session$ns("edit"))
-    }
-  })
+  form_result <- callModule(formDataset, "new", edit)
+  callModule(table, "dataset", form_result)
 }
-
-

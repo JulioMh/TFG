@@ -11,7 +11,7 @@ formDatasetUI <- function (id) {
 }
 
 formDataset <- function (input, output, session, data, onClick) {
-  dataset <- reactiveValues(content = "")
+  dataset <- reactiveValues()
   output$form <- renderUI({
     tagList(
       fileInput(

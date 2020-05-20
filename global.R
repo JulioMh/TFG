@@ -16,12 +16,16 @@ source("views/guest/guest.R")
 source("views/user/user.R")
 source("views/guest/modules/auth/signUp.R")
 source("views/guest/modules/auth/logIn.R")
-source("modules/crud/insert.R")
+
+source("database/crud/post.R")
+source("database/crud/get.R")
+
 source("modules/dataset/form.R")
 source("modules/dataset/dataset.R")
+source("modules/table.R")
+
 source("views/user/modules/datasets/crud/listDataset.R")
 source("views/user/modules/datasets/crud/editDataset.R")
-source("views/user/modules/datasets/datasets.R")
 
 ################################
 # DATABASE
