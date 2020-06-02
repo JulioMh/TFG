@@ -1,23 +1,17 @@
 tableUI <- function (id) {
   ns <- NS(id)
-  DT::dataTableOutput(ns("tablePrev"))
+  tagList(br(), addSpinner(DT::dataTableOutput(ns("table")), spin = "cube", color = "#999999"))
 }
 
-table <- function (input, output, session, datapath) {
-  output$tablePrev <- DT::renderDataTable({
-    req(datapath$path_dataset())
-    tryCatch({
-      dataset <- read.csv(datapath$path_dataset())
-    },
-    error = function(e) {
-      stop(safeError(e))
-    })
-    
-    return(DT::datatable(
-      dataset,
-      options = list(lengthMenu = list(c(5, 10, -1), c('5', '10', 'All')),
-                     pageLength = 10)
-    ))
-  })
-  
+table <- function(input, output, session, data) {
+  output$table <-
+    DT::renderDataTable(
+      data(),
+      options = list(lengthMenu = list(c(5, 10,-1), c('5', '10', 'All')),
+                     pageLength = 10),
+      selection = 'single',
+    )
+  return(list(index = reactive({
+    input$table_rows_selected
+  })))
 }

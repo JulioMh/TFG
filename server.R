@@ -1,12 +1,12 @@
 shinyServer(function(input, output, session){
   session$userData$user <- reactiveValues(id = -1, dataset="")
-  output$mode <- renderUI({
+  observeEvent(session$userData$user$id, {
     if(session$userData$user$id > 0){
+      output$mode <- renderUI(userUI("user"))    
       callModule(user, "user")
-      userUI("user")
     }else{
+      output$mode <- renderUI(guestUI("guest"))    
       callModule(guest, "guest")
-      guestUI("guest")
     }
   })
 })

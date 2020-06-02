@@ -3,7 +3,7 @@ guestUI <- function(id) {
   tagList(
     navbarPage(
       title = "BestAppEver",
-      theme = shinytheme("cosmo"),
+      theme = shinytheme("flatly"),
       tabPanel(
         "Home",
         br(),

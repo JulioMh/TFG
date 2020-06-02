@@ -1,0 +1,63 @@
+prepareDataForTraining <-
+  function(dataset,
+           preds,
+           preds_to_center,
+           do_pred_na,
+           target) {
+    dataset <-
+      dataset %>% select(all_of(preds), all_of(target))
+    
+    trainRowNumbers <-
+      createDataPartition(dataset[[target]],
+                          times = 1,
+                          p = 0.8,
+                          list = FALSE)
+    
+    trainData <- dataset[trainRowNumbers, ]
+    
+    testData <- dataset[-trainRowNumbers, ]
+    
+    if (do_pred_na) {
+      impute_model <- trainImputeModel(trainData)
+      trainData <- predictImputeModel(trainData, impute_model)
+    } else{
+      impute_model <- NULL
+    }
+    dummy_model <- trainDummyModel(trainData, target)
+    trainData <- predictDummyModel(trainData, target, dummy_model)
+    
+    if (!is.null(preds_to_center)) {
+      center_model <- trainCenterModel(trainData, preds_to_center)
+      trainData <- predictCenterModel(trainData, center_model)
+    } else{
+      center_model <- NULL
+    }
+    return(
+      list(
+        trainData = trainData,
+        index = trainRowNumbers,
+        impute_model = impute_model,
+        dummy_model = dummy_model,
+        center_model = center_model
+      )
+    )
+  }
+
+prepareDataToPredict <-
+  function(dataset,
+           impute_model,
+           dummy_model,
+           center_model,
+           target) {
+    if (!is.na(impute_model)) {
+      dataset <- predictImputeModel(dataset, impute_model)
+    }
+    
+    dataset <- predictDummyModel(dataset, target, dummy_model)
+    
+    if (!is.na(center_model)) {
+      dataset <- predictCenterModel(dataset, center_model)
+    }
+    
+    return(dataset)
+  }
