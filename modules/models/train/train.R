@@ -29,11 +29,22 @@ trainServer <- function (input, output, session) {
       getPredsNames(selected_dataset$dataset(), input$target)
     })
   status <- reactiveValues(done = FALSE)
-  fields <- callModule(basicForm, "basic", NULL)
-  selected_dataset <- callModule(selectDataset, "dataset")
+  fields <- callModule(basicForm, "basic", NULL, reactive({NULL}))
+  selected_dataset <- callModule(selectDataset, "dataset", reactive({loadDatasets(session$userData$user$id)}))
   settings <- callModule(advanceMode, "advance", preds_names)
+  callModule(table, "models", reactive({
+    selected_dataset$dataset()
+  }))
+  train_status <-
+    reactiveValues(
+      process_data = FALSE,
+      train_model = FALSE,
+      save_model = FALSE,
+      done = FALSE
+    )
   advance_values <-
     reactiveValues(
+      methods = c("rf", "nnet"),
       preds = preds_names,
       to_center = c(),
       pred_missing_fields = FALSE
@@ -44,7 +55,7 @@ trainServer <- function (input, output, session) {
       advanceModeUI(session$ns("advance"))
     }
   })
-
+  
   output$picker_target <- renderUI({
     pickerInput(
       inputId = session$ns("target"),
@@ -74,26 +85,23 @@ trainServer <- function (input, output, session) {
       )
     ))
   })
-  
-  observeEvent(selected_dataset$dataset(), {
-    req(selected_dataset$dataset())
-    callModule(table, "models", reactive({
-      selected_dataset$dataset()
-    }))
-  })
-  
+
   observeEvent(input$submit, {
     confirmSweetAlert(
       session = session,
       inputId = "confirm",
       type = "warning",
       title = "¿Estas seguro?",
-      text = "Este proceso tardará varios minutos"
+      text = "Este proceso puede tardar varios minutos"
     )
   })
   
   observeEvent(settings$preds(), {
     advance_values$preds <- settings$preds
+  })
+  
+  observeEvent(settings$methods(), {
+    advance_values$methods <- settings$methods()
   })
   
   observeEvent(settings$to_center(), {
@@ -103,18 +111,18 @@ trainServer <- function (input, output, session) {
     advance_values$pred_missing_fields <- settings$pred_missing_fields()
   })
   
-  observeEvent(input$confirm, {
-    if (isTRUE(input$confirm)) {
+  observeEvent(train_status$process_data, {
+    if (train_status$process_data) {
+      sendSweetAlert(
+        session = session,
+        title = "Preparando datos...",
+        closeOnClickOutside = FALSE,
+        type = "info",
+        btn_labels = NA,
+        showCloseButton = FALSE
+      )
       tryCatch({
-        sendSweetAlert(
-          session = session,
-          title = "Preparando datos...",
-          closeOnClickOutside = FALSE,
-          type = "info",
-          btn_labels = NA,
-          showCloseButton = FALSE
-        )
-        datasets <-
+        train_status$datasets <-
           prepareDataForTraining(
             dataset = selected_dataset$dataset(),
             preds = advance_values$preds(),
@@ -122,10 +130,28 @@ trainServer <- function (input, output, session) {
             do_pred_na = advance_values$pred_missing_fields,
             target = input$target
           )
-        
+        train_status$train_model <- TRUE
+      },
+      error = function(cond) {
         sendSweetAlert(
           session = session,
-          title = "Entrenando los modelos...",
+          title = "Hay un problema con los datos...",
+          text = cond,
+          type = "error"
+        )
+      },
+      finally = {
+        train_status$process_data  <- FALSE
+      })
+    }
+  })
+  
+  observeEvent(train_status$train_model, {
+    if (train_status$train_model) {
+      tryCatch({
+        sendSweetAlert(
+          session = session,
+          title = "Entrenando...",
           text = "Espere un momento, estamos trabajando en ello",
           closeOnClickOutside = FALSE,
           type = "info",
@@ -134,12 +160,33 @@ trainServer <- function (input, output, session) {
         )
         
         models <-
-          doTrain(datasets$trainData,
+          doTrain(advance_values$methods,
+                  train_status$datasets$trainData,
                   input$target)
-        models$impute_model <- datasets$impute_model
-        models$dummy_model <- datasets$dummy_model
-        models$center_model <- datasets$center_model
         
+        models$impute_model <- train_status$datasets$impute_model
+        models$dummy_model <- train_status$datasets$dummy_model
+        models$center_model <- train_status$datasets$center_model
+        
+        train_status$models <- models
+        
+        train_status$save_model <- TRUE
+      },
+      error = function(cond) {
+        sendSweetAlert(
+          session = session,
+          title = "No se han podido entrenar los modelos...",
+          text = cond,
+          type = "error"
+        )
+      },
+      finally = train_status$train_model  <- FALSE)
+    }
+  })
+  
+  observeEvent(train_status$save_model, {
+    if (train_status$save_model) {
+      tryCatch({
         sendSweetAlert(
           session = session,
           title = "Almacenando en la base de datos...",
@@ -149,42 +196,58 @@ trainServer <- function (input, output, session) {
           showCloseButton = FALSE
         )
         
-        trainRowNumbers <- paste(as.vector(trainRowNumbers), collapse = ", ")
+        trainRowNumbers <-
+          paste(as.vector(train_status$datasets$index), collapse = ", ")
         
         saveModel(
-          models,
-          advance_values$preds(),
+          train_status$models,
           input$target,
           fields$name(),
           fields$description(),
           session$userData$user$id,
           selected_dataset$id(),
-          trainRowNumbers
+          trainRowNumbers,
+          advance_values$preds()
         )
-        reset("name")
-        reset("description")
-        sendSweetAlert(
-          session = session,
-          title = "Listo!!",
-          text = "Modelo entrenado y guardado",
-          type = "success"
-        )
-        status$done <- TRUE
+        train_status$done <- TRUE
       },
       error = function(cond) {
         sendSweetAlert(
           session = session,
-          title = "Ha habido un problema...",
+          title = "No se han podido guardar los mdelos...",
           text = cond,
           type = "error"
         )
+      },
+      finally = {
+        train_status$save_model  <- FALSE
+        train_status$models <- NULL
+        train_status$datsets <- NULL
       })
     }
   })
   
-  return(list(
-    do_report = reactive({status$done})
-  ))
+  observeEvent(train_status$done, {
+    if (train_status$done) {
+      sendSweetAlert(
+        session = session,
+        title = "Listo!!",
+        text = "Modelo entrenado y guardado",
+        type = "success"
+      )
+      train_status$done <- FALSE
+    }
+  })
+  
+  observeEvent(input$confirm, {
+    if (isTRUE(input$confirm)) {
+      train_status$process_data <- TRUE
+    }
+  })
+  
+  return(list(do_report = reactive({
+    status$done
+  })))
 }
 
 getPredsNames <- function(dataset, target) {

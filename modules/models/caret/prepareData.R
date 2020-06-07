@@ -21,7 +21,7 @@ prepareDataForTraining <-
       impute_model <- trainImputeModel(trainData)
       trainData <- predictImputeModel(trainData, impute_model)
     } else{
-      impute_model <- NULL
+      impute_model <- ""
     }
     dummy_model <- trainDummyModel(trainData, target)
     trainData <- predictDummyModel(trainData, target, dummy_model)
@@ -30,7 +30,7 @@ prepareDataForTraining <-
       center_model <- trainCenterModel(trainData, preds_to_center)
       trainData <- predictCenterModel(trainData, center_model)
     } else{
-      center_model <- NULL
+      center_model <- ""
     }
     return(
       list(
@@ -49,13 +49,14 @@ prepareDataToPredict <-
            dummy_model,
            center_model,
            target) {
-    if (!is.na(impute_model)) {
+
+    if (impute_model != "") {
       dataset <- predictImputeModel(dataset, impute_model)
     }
     
     dataset <- predictDummyModel(dataset, target, dummy_model)
     
-    if (!is.na(center_model)) {
+    if (center_model != "") {
       dataset <- predictCenterModel(dataset, center_model)
     }
     

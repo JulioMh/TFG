@@ -9,7 +9,8 @@ modelSummary <- function(input, output, session, data, id) {
   new_attributes <-
     callModule(basicForm, "edit", reactive({
       data()$attributes
-    }))
+    }),
+    reactive({NULL}))
   
   output$submit <- renderUI({
     validate(need(new_attributes$name() != "", "Debes introducir un nombre"))
@@ -40,24 +41,26 @@ modelSummary <- function(input, output, session, data, id) {
       attributes <-
         list(name = new_attributes$name(),
              description = new_attributes$description())
-      res <- editModel(attributes, id())
-      if (res) {
+      tryCatch({
+        editModel(attributes, id())
         sendSweetAlert(
           session = session,
-          title = "Success !!",
-          text = "Dataset saved",
+          title = "Listo !!",
+          text = "Los datos han sido guardados",
           type = "success"
         )
-      }
+      },
+      error = function(cond) {
+        sendSweetAlert(
+          session = session,
+          title = "No se han podido guardar los cambios...",
+          text = cond,
+          type = "error"
+        )
+      })
     }
   })
   
   output$compare <-
-    renderPrint(summary(resamples(
-      list(
-        "RandomForest" = data()$models$rf,
-        "SMV" = data()$models$svm,
-        "XGBDART" = data()$models$xgbdart
-      )
-    )))
+    renderPrint(summary(resamples(data()$models)))
 }

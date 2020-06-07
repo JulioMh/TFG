@@ -11,6 +11,8 @@ library(stringr)
 library(tidyverse)
 library(caret)
 library(doSNOW)
+library(rlist)
+library(waiter)
 
 
 ################################
@@ -28,15 +30,16 @@ source("views/guest/guest.R")
 
 source("modules/datasets/form.R")
 source("modules/datasets/datasets.R")
+source("modules/datasets/pickerDataset.R")
+source("modules/datasets/selectDataset.R")
 source("modules/models/train/train.R")
-source("modules/models/train/select_dataset.R")
-source("modules/models/train/advance_mode.R")
-source("modules/models/train/form.R")
+source("modules/models/train/advanceMode.R")
 source("modules/models/models.R")
 source("modules/models/model/model.R")
 source("modules/models/model/summary.R")
 source("modules/models/model/compareDatasets.R")
 source("modules/models/model/details.R")
+source("modules/models/model/use.R")
 source("modules/list.R")
 source("modules/table.R")
 source("modules/basicForm.R")
@@ -60,6 +63,5 @@ options(mysql = list(
 encoding = 'UTF-8')
 databaseName <- "db"
 
-titanic <- read.csv("database/files/1/datasets/0.388745460659266/0.csv")
-rock <- read.csv("database/files/1/datasets/0.330122414045036/0.csv")
-insurance <- read.csv("database/files/1/datasets/0.816763020586222/0.csv")
+insurance <- read.csv("database/files/1/datasets/0.120885063661262/0.csv")
+

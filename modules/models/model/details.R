@@ -1,22 +1,28 @@
 detailsUI <- function(id) {
   ns <- NS(id)
-  tagList(verbatimTextOutput(ns("confusion_matrix")))
+  uiOutput(ns("models"))
 }
 
 details <-
   function(input,
            output,
            session,
-           test,
-           predicted,
-           target) {
-    
-    observeEvent(test(),{
-      req(test())
-      print(test()[[target()]])
-      print(as.numeric(predicted()))
+           models) {
+    observeEvent(models(), {
+      #print(models())
     })
-    output$confusion_matrix <-
-      renderPrint({
-        confusionMatrix(reference = test()[[target()]], data = as.numeric(predicted()))})
+    
+    output$models <- renderUI({
+      tagList(lapply(models(), function(model) {
+        tabPanel(title = model$method,
+                 verbatimTextOutput(session$ns(model$method)))
+      }))
+    })
+    
+    lapply(models(), function(model) {
+      output[[model()$method]] <- renderUI({
+        h5("todo")
+      })
+    })
+    
   }

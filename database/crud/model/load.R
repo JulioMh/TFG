@@ -59,26 +59,31 @@ processResponse  <- function(response) {
   attributes$description <- response$description
   
   models <- list()
+    
+  models_dirs <- response$models
+  models_dirs <- unlist(strsplit(models_dirs, split = ", "))
   
-  models$rf <- readRDS(response$rf)
-  models$svm <- readRDS(response$svm)
-  models$xgbdart <- readRDS(response$xgbdart)
+  for(dir in models_dirs){
+    model <- readRDS(dir)
+    models[[model$method]] <- model
+  }
   
   preProcess <- list()
-  preProcess$dummy_model <- readRDS(response$dummy_model)
   preProcess$target <- response$target
-  preProcess$center_model <-
-    ifelse(
-      is.na(response$center_model),
-      response$center_model,
-      readRDS(response$center_model)
-    )
-  preProcess$impute_model <-
-    ifelse(
-      is.na(response$impute_model),
-      response$impute_model,
-      readRDS(response$impute_model)
-    )
+
+  preProcess$dummy_model <- readRDS(response$dummy_model)
+   
+  if(response$center_model == ""){
+    preProcess$center_model <- ""
+  }else{
+    preProcess$center_model <- readRDS(response$center_model)
+  }
+  
+  if(response$impute_model == ""){
+    preProcess$impute_model <- ""
+  }else{
+    preProcess$impute_model <- readRDS(response$impute_model)
+  }
   
   datasets <- list()
   dataset_data <- loadDataset(response$dataset_id)
@@ -88,7 +93,7 @@ processResponse  <- function(response) {
   
   datasets$test <- dataset_data$dataset[-trainRowNumbers, ]
   datasets$processed <- datasets$test
-  
+
   datasets$processed <- prepareDataToPredict(
     dataset = datasets$processed,
     impute_model = preProcess$impute_model,
@@ -103,6 +108,7 @@ processResponse  <- function(response) {
   return(
     list(
       attributes = attributes,
+      cols = unlist(strsplit(response$cols, split = ", ")),
       models = models,
       preProcess = preProcess,
       datasets = datasets

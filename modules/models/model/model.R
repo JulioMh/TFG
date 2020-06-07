@@ -7,12 +7,9 @@ modelUI <- function(id) {
     tabPanel("Dataset de prueba",
              br(),
              compareDatasetsUI(ns("compare"))),
-    tabPanel("Random Forest",
+    tabPanel("Usar",
              br(),
-             detailsUI(ns("rf"))),
-    tabPanel("SVM"),
-    tabPanel("XGBDART"),
-    tabPanel("Usar")
+             useModelUI(ns("use")))
   ))
 }
 
@@ -26,20 +23,13 @@ model <- function(input, output, session, model_id) {
   }), reactive({
     values$id
   }))
-  callModule(details, "rf",
-             reactive({
-               values$data$datasets$test
-             }),
-             reactive({
-               values$data$datasets$predictions$predict_RF
-             }), reactive({
-               values$data$preProcess$target
-             }))
-  
+  callModule(useModel, "use", reactive({
+    values$data
+  }))
   observeEvent(model_id(), {
     if (is.null(model_id())) {
       all_models <- loadModels(session$userData$user$id)
-      id <- all_models[1, ]$model_id()
+      id <- all_models[1,]$model_id()
     } else{
       id <- model_id()
     }

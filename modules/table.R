@@ -1,6 +1,6 @@
 tableUI <- function (id) {
   ns <- NS(id)
-  tagList(br(), addSpinner(DT::dataTableOutput(ns("table")), spin = "cube", color = "#999999"))
+  tagList(br(), DT::dataTableOutput(ns("table")))
 }
 
 table <- function(input, output, session, data) {

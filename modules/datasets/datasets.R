@@ -14,7 +14,7 @@ datasetUI <- function (id) {
   ))
 }
 
-testdataset <- function (input, output, session) {
+dataset <- function (input, output, session) {
   data <-
     reactiveValues(
       name = "",
@@ -28,6 +28,12 @@ testdataset <- function (input, output, session) {
   edit_result <- callModule(datasetForm, "edit", reactive({data}))
   create_result <- callModule(datasetForm, "new", NULL)
   
+  callModule(table, "edit", reactive({
+    data$dataset
+  }))
+  callModule(table, "dataset", reactive({
+    data$dataset
+  })) 
   
   selected <-
     callModule(table, "list", reactive({
@@ -74,8 +80,6 @@ testdataset <- function (input, output, session) {
     }
   })
   
-  
-  
   observeEvent(input$cancel, {
     data$id <- ""
     data$name <- ""
@@ -91,20 +95,14 @@ testdataset <- function (input, output, session) {
     data$description <- data$fetch$description[selected$index()]
     data$dataset <- read.csv(data$fetch$dataset[selected$index()])
     data$doEdit <- TRUE
-    callModule(table, "edit", reactive({
-      data$dataset
-    }))
   })
   
   observeEvent(create_result$path_dataset(), {
     if(create_result$path_dataset() == "reset"){
       output$table <- renderUI(h1(""))
     }else{
-      dataset <- read.csv(create_result$path_dataset())
+      data$dataset <- read.csv(create_result$path_dataset())
       output$table <- renderUI(tableUI(session$ns("dataset")))
-      callModule(table, "dataset", reactive({
-        dataset
-      }))  
     }
     
   })

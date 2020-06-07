@@ -1,38 +1,31 @@
 doTrain <-
-  function(dataset,
+  function(methods,
+           dataset,
            target) {
     
     fitControl <- trainControl(
       method = "cv",
       number = 5,
-      search = "grid"
+      search = "grid",
+      allowParallel = T
     )
+    
     c1 <- makeCluster(4, type = 'SOCK')
     registerDoSNOW(c1)
-  
+    
     models <- list()
-    for(method in l){
-      models[method] <- train(
+    for(method in methods){
+      models[[method]] <- train(
         as.formula(paste(target, '~ .')),
         data = dataset,
         method = method,
         trControl = fitControl
       )
     }
-    
+
     stopCluster(c1)
     
-    return(models)
+    return(
+      models
+    )
   }
-
-
-
-models <- list()
-for(method in l){
-  models[method] <- train(
-    charges ~ .,
-    data = insurance,
-    method = method,
-    trControl = fitControl
-  )
-}

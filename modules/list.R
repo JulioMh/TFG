@@ -24,11 +24,13 @@ listServer <- function (input, output, session, load, reload) {
   observeEvent(reload(),{
     if(reload()){
       values$list <- load(session$userData$user$id)
+      values$id <- NULL
     }
   })
   
   observeEvent(input$reload, {
     values$list <- load(session$userData$user$id)
+    values$id <- NULL
   })
   
   observeEvent(selected$index(), {

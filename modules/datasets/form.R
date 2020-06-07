@@ -1,15 +1,17 @@
 datasetFormUI <- function (id) {
   ns <- NS(id)
-  tagList(
-    useShinyjs(),
-    uiOutput(ns("form")))
+  tagList(useShinyjs(),
+          uiOutput(ns("form")))
 }
 
-datasetForm <- function (input, output, session, data, onClick) {
+datasetForm <- function (input, output, session, data) {
   values <-
-    reactiveValues(reload = NULL,
+    reactiveValues(reload = FALSE,
                    upload_state = NULL)
-  fields <- callModule(basicForm, "basic", data)
+  fields <-
+    callModule(basicForm, "basic", data, reactive({
+      values$reload
+    }))
   
   file_input <- reactive({
     if (is.null(values$upload_state)) {
@@ -35,12 +37,10 @@ datasetForm <- function (input, output, session, data, onClick) {
         )
       )
     }
-    tagList(
-      useSweetAlert(),
-      file,
-      basicFormUI(session$ns("basic")),
-      uiOutput(session$ns("submit")),
-    )
+    tagList(useSweetAlert(),
+            file,
+            basicFormUI(session$ns("basic")),
+            uiOutput(session$ns("submit")),)
   })
   
   
@@ -49,15 +49,16 @@ datasetForm <- function (input, output, session, data, onClick) {
       session = session,
       inputId = "confirm",
       type = "warning",
-      title = "Want to confirm ?",
+      title = "¿Seguro que quieres continuar?",
     )
   })
   
   observeEvent(input$confirm, {
     if (isTRUE(input$confirm)) {
+      print(data())
       submitedData <- list(
         "name" = fields$name(),
-        "id" = ifelse(is.null(data), "", data$id),
+        "id" = ifelse(is.null(data), "", data()$id),
         "description" = fields$description(),
         "dataset" = input$dataset$datapath,
         "user_id" = session$userData$user$id
@@ -68,22 +69,21 @@ datasetForm <- function (input, output, session, data, onClick) {
       if (res) {
         sendSweetAlert(
           session = session,
-          title = "Success !!",
-          text = "Dataset saved",
+          title = "Listo!!",
+          text = "Dataset guardado",
           type = "success"
         )
         if (is.null(data)) {
           values$upload_state <- "reset"
+          values$reload <- TRUE
           reset("dataset")
-          reset("name")
-          reset("description")
         }
         
       } else{
         sendSweetAlert(
           session = session,
           title = "Error...",
-          text = "Dataset couldn't be stored",
+          text = "El dataset no se ha podido almacenar",
           type = "error"
         )
       }

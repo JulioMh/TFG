@@ -29,9 +29,8 @@ saveDataset <- function(data) {
   }, error = function(e) {
     res <- safeError(e)
     stop(safeError(e))
-  })
+  }, finally = dbDisconnect(db)) 
   
-  dbDisconnect(db)
   return(res)
 }
 

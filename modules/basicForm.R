@@ -3,10 +3,11 @@ basicFormUI <- function (id) {
   uiOutput(ns("form"))
 }
 
-basicForm <- function (input, output, session, data) {
+basicForm <- function (input, output, session, data, reload_data) {
   values <-
     reactiveValues(name = "",
-                   description = "")
+                   description = "",
+                   reload = FALSE)
   
   output$form <- renderUI({
     tagList(
@@ -21,6 +22,15 @@ basicForm <- function (input, output, session, data) {
         value = ifelse(is.null(data), "", data()$description)
       )
     )
+  })
+  
+  
+  observeEvent(reload_data(), {
+    req(reload_data())
+    if (reload_data()) {
+      reset("name")
+      reset("description")
+    }
   })
   
   return(list(name = reactive({
