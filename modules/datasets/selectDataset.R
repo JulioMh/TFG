@@ -23,7 +23,7 @@ selectDataset <- function(input, output, session, datasets) {
       id = NULL,
       target = NULL,
       datasets = NULL,
-      reload = NULL
+      reload = FALSE
     )
   dataset <- callModule(datasetForm, "dataset", NULL)
   picked <-
@@ -57,15 +57,15 @@ selectDataset <- function(input, output, session, datasets) {
       values$id <- NULL
     } else{
       req(picked$id())
+      values$reload <- !values$reload
       selected_dataset <- loadDataset(picked$id())
       values$dataset <- selected_dataset$dataset
-      values$reload <- TRUE
+      values$id <- picked$id()
     }
   })
   
   observeEvent(picked$reload(), {
-    req(picked$reload())
-    values$reload <- TRUE
+    values$reload <- !values$reload
   })
   
   observeEvent(dataset$path_dataset(), {
@@ -94,8 +94,6 @@ selectDataset <- function(input, output, session, datasets) {
     id = reactive({
       values$id
     }),
-    reload = reactive({
-      values$reload
-    })
+    reload = reactive({values$reload})
   ))
 }

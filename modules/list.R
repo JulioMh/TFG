@@ -18,7 +18,7 @@ listServer <- function (input, output, session, load, reload) {
   values <-
     reactiveValues(list = load(session$userData$user$id), id = NULL)
   selected <- callModule(table, "table", reactive({
-    values$list[2:ncol(values$list)]
+    values$list[3:ncol(values$list)]
   }))
 
   observeEvent(reload(),{

@@ -1,7 +1,6 @@
 trainUI <- function (id) {
   ns <- NS(id)
   tagList(
-    useSweetAlert(),
     sidebarPanel(
       selectDatasetUI(ns("dataset")),
       hr(),
@@ -28,13 +27,7 @@ trainServer <- function (input, output, session) {
     reactive({
       getPredsNames(selected_dataset$dataset(), input$target)
     })
-  status <- reactiveValues(done = FALSE)
-  fields <- callModule(basicForm, "basic", NULL, reactive({NULL}))
-  selected_dataset <- callModule(selectDataset, "dataset", reactive({loadDatasets(session$userData$user$id)}))
-  settings <- callModule(advanceMode, "advance", preds_names)
-  callModule(table, "models", reactive({
-    selected_dataset$dataset()
-  }))
+  values <- reactiveValues(datasets = loadDatasets(session$userData$user$id))
   train_status <-
     reactiveValues(
       process_data = FALSE,
@@ -44,11 +37,32 @@ trainServer <- function (input, output, session) {
     )
   advance_values <-
     reactiveValues(
-      methods = c("rf", "nnet"),
       preds = preds_names,
       to_center = c(),
       pred_missing_fields = FALSE
     )
+  
+  status <- reactiveValues(done = FALSE)
+  
+  fields <- callModule(basicForm, "basic", NULL, reactive({
+    NULL
+  }))
+  
+  selected_dataset <-
+    callModule(selectDataset, "dataset", reactive({
+      values$datasets
+    }))
+  
+  settings <-
+    callModule(advanceMode, "advance", preds_names, reactive({
+      advance_values$methods
+    }))
+  
+  callModule(table, "models", selected_dataset$dataset)
+  
+  observeEvent(selected_dataset$reload(), {
+    values$datasets <- loadDatasets(session$userData$user$id)
+  })
   
   output$advance_ui <- renderUI({
     if ((input$open_advance %% 2) != 0) {
@@ -63,6 +77,15 @@ trainServer <- function (input, output, session) {
       choices = colnames(selected_dataset$dataset()),
       options = list(`live-search` = TRUE)
     )
+  })
+  
+  observeEvent(input$target, {
+    req(input$target)
+    if (is.factor(selected_dataset$dataset()[[input$target]])) {
+      advance_values$methods = "adaboost"
+    } else{
+      advance_values$methods = "rf"
+    }
   })
   
   output$submit <- renderUI({
@@ -81,11 +104,11 @@ trainServer <- function (input, output, session) {
         inputId = session$ns("submit"),
         label = "Entrenar",
         style = "stretch",
-        color = "warning"
+        color = "success"
       )
     ))
   })
-
+  
   observeEvent(input$submit, {
     confirmSweetAlert(
       session = session,
@@ -209,6 +232,12 @@ trainServer <- function (input, output, session) {
           trainRowNumbers,
           advance_values$preds()
         )
+        sendSweetAlert(
+          session = session,
+          title = "Listo!!",
+          text = "Modelo entrenado y guardado",
+          type = "success"
+        )
         train_status$done <- TRUE
       },
       error = function(cond) {
@@ -227,18 +256,6 @@ trainServer <- function (input, output, session) {
     }
   })
   
-  observeEvent(train_status$done, {
-    if (train_status$done) {
-      sendSweetAlert(
-        session = session,
-        title = "Listo!!",
-        text = "Modelo entrenado y guardado",
-        type = "success"
-      )
-      train_status$done <- FALSE
-    }
-  })
-  
   observeEvent(input$confirm, {
     if (isTRUE(input$confirm)) {
       train_status$process_data <- TRUE
@@ -246,7 +263,7 @@ trainServer <- function (input, output, session) {
   })
   
   return(list(do_report = reactive({
-    status$done
+    train_status$done
   })))
 }
 

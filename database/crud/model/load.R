@@ -12,6 +12,7 @@ loadModels <- function(id) {
     sprintf(
       "select
               m.id,
+              m.user_id,
               m.name,
               m.description,
               d.name as dataset,
@@ -91,6 +92,7 @@ processResponse  <- function(response) {
   trainRowNumbers <-
     convertStringToMatrix(response$trainRowNumbers)
   
+  datasets$train <- dataset_data$dataset[trainRowNumbers, ]
   datasets$test <- dataset_data$dataset[-trainRowNumbers, ]
   datasets$processed <- datasets$test
 

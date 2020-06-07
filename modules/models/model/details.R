@@ -1,28 +1,18 @@
 detailsUI <- function(id) {
   ns <- NS(id)
-  uiOutput(ns("models"))
+  fluidRow(column(6, plotOutput(ns("varImp"))),
+           column(6, verbatimTextOutput(ns("description"))),)
 }
 
 details <-
   function(input,
            output,
            session,
-           models) {
-    observeEvent(models(), {
-      #print(models())
-    })
-    
-    output$models <- renderUI({
-      tagList(lapply(models(), function(model) {
-        tabPanel(title = model$method,
-                 verbatimTextOutput(session$ns(model$method)))
-      }))
-    })
-    
-    lapply(models(), function(model) {
-      output[[model()$method]] <- renderUI({
-        h5("todo")
+           model) {
+    output$varImp <-
+      renderPlot({
+        plot(varImp(model), main = "Importancia de las variables")
       })
-    })
     
+    output$description <- renderPrint(model)
   }

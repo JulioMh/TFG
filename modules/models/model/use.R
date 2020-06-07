@@ -10,9 +10,7 @@ useModelUI <- function(id) {
 useModel <- function(input, output, session, data) {
   values <-
     reactiveValues()
-  callModule(table, "result", reactive({
-    values$dataset
-  }))
+  callModule(table, "result", selected$dataset)
   
   selected <- callModule(selectDataset, "dataset", reactive({
     values$availableDatasets
@@ -27,9 +25,9 @@ useModel <- function(input, output, session, data) {
       style = "text-align: center;",
       actionBttn(
         inputId = session$ns("submit"),
-        label = "Entrenar",
-        style = "stretch",
-        color = "warning"
+        label = "Predecir",
+        style = "minimal",
+        color = "success"
       )
     ))
   })
@@ -39,18 +37,16 @@ useModel <- function(input, output, session, data) {
       sendSweetAlert(
         session = session,
         title = "Información",
-        text = "Este modelo no puede hacer predicciones sobre este dataset",
+        text = "Dataset no compatible con este modelo",
         type = "info"
       )
     }
   })
   
   observeEvent(selected$reload(),{
-    if(selected$reload()){
       values$availableDatasets <-
         getAvailableDatasetsToPredict(data()$cols,
                                       session$userData$user$id)  
-    }
   })
   
   observeEvent(data(), {
@@ -58,11 +54,6 @@ useModel <- function(input, output, session, data) {
     values$availableDatasets <-
       getAvailableDatasetsToPredict(data()$cols,
                                     session$userData$user$id)
-  })
-  
-  observeEvent(selected$dataset(), {
-    req(selected$dataset())
-    values$dataset <- selected$dataset()
   })
   
   observeEvent(input$submit, {
@@ -77,7 +68,7 @@ useModel <- function(input, output, session, data) {
   observeEvent(input$confirm, {
     if (isTRUE(input$confirm)) {
       processed_dataset <- prepareDataToPredict(
-        dataset = values$dataset,
+        dataset = selected$dataset,
         impute_model = data()$preProcess$impute_model,
         dummy_model = data()$preProcess$dummy_model,
         center_model = data()$preProcess$center_model,
@@ -86,7 +77,7 @@ useModel <- function(input, output, session, data) {
       for (model in isolate(data()$model)) {
         tryCatch({
           pred <- predict(model, processed_dataset)
-          values$dataset[[model$method]] <- pred
+          selected$dataset[[model$method]] <- pred
         }, error = function(cond) {
           sendSweetAlert(
             session = session,

@@ -1,7 +1,6 @@
 datasetFormUI <- function (id) {
   ns <- NS(id)
-  tagList(useShinyjs(),
-          uiOutput(ns("form")))
+  uiOutput(ns("form"))
 }
 
 datasetForm <- function (input, output, session, data) {
@@ -55,7 +54,6 @@ datasetForm <- function (input, output, session, data) {
   
   observeEvent(input$confirm, {
     if (isTRUE(input$confirm)) {
-      print(data())
       submitedData <- list(
         "name" = fields$name(),
         "id" = ifelse(is.null(data), "", data()$id),
@@ -101,7 +99,12 @@ datasetForm <- function (input, output, session, data) {
       validate(need(fields$name() != "", label = "Name"))
     }
     return(div(style = "text-align: center;",
-               actionButton(session$ns("submit"), "Save")))
+               actionBttn(
+                 inputId = session$ns("submit"),
+                 label = "Guardar",
+                 style = "minimal",
+                 color = "success"
+               )))
   })
   
   observeEvent(input$dataset, {

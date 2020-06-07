@@ -1,8 +1,9 @@
 datasetUI <- function (id) {
   ns <- NS(id)
-  tagList(tabsetPanel(id=ns("tabsetPanel"),
+  tagList(tabsetPanel(
+    id = ns("tabsetPanel"),
     tabPanel("My datasets",
-             value="mydatasets",
+             value = "mydatasets",
              br(),
              uiOutput(ns("mode"))),
     tabPanel(
@@ -21,11 +22,14 @@ dataset <- function (input, output, session) {
       description = "",
       id = "",
       dataset = "",
-      fetch = loadDatasets(session$userData$user$id),
       doEdit = FALSE
     )
   
-  edit_result <- callModule(datasetForm, "edit", reactive({data}))
+  values <- reactiveValues(reload = NULL)
+  
+  edit_result <- callModule(datasetForm, "edit", reactive({
+    data
+  }))
   create_result <- callModule(datasetForm, "new", NULL)
   
   callModule(table, "edit", reactive({
@@ -33,21 +37,20 @@ dataset <- function (input, output, session) {
   }))
   callModule(table, "dataset", reactive({
     data$dataset
-  })) 
+  }))
   
-  selected <-
-    callModule(table, "list", reactive({
-      data$fetch[2:3]
+  dataset_id <-
+    callModule(listServer, "list", loadDatasets, reactive({
+      values$reload
     }))
   
-  observeEvent(input$tabsetPanel,{
-    data$fetch <- loadDatasets(session$userData$user$id)
+  observeEvent(input$tabsetPanel, {
+    if (input$tabsetPanel == "New dataset") {
+      values$reload <- FALSE
+    } else{
+      values$reload <- TRUE
+    }
   })
-  
-  observeEvent(input$reload,{
-    data$fetch <- loadDatasets(session$userData$user$id)
-  })
-  
   
   output$mode <- renderUI({
     if (data$doEdit) {
@@ -56,27 +59,14 @@ dataset <- function (input, output, session) {
         actionBttn(
           inputId = session$ns("cancel"),
           icon = icon("arrow-circle-left"),
-          style = "pill", 
+          style = "pill",
           color = "warning",
           size = "xs"
         ),
-        
       ),
-      mainPanel(tableUI(session$ns(
-        "edit"
-      ))))
+      mainPanel(tableUI(session$ns("edit"))))
     } else {
-      tagList(
-      actionBttn(
-        inputId = session$ns("reload"),
-        label = NULL,
-        style = "material-circle", 
-        color = "default",
-        icon = icon("redo"),
-        size = "xs"
-      ),
-      br(),
-      tableUI(session$ns("list")))
+      listUI(session$ns("list"))
     }
   })
   
@@ -85,25 +75,27 @@ dataset <- function (input, output, session) {
     data$name <- ""
     data$description <- ""
     data$doEdit <- FALSE
-    data$fetch <- loadDatasets(session$userData$user$id)
+    values$reload <- TRUE
   })
   
-  observeEvent(selected$index(), {
-    req(selected$index())
-    data$id <- data$fetch$id[selected$index()]
-    data$name <- data$fetch$name[selected$index()]
-    data$description <- data$fetch$description[selected$index()]
-    data$dataset <- read.csv(data$fetch$dataset[selected$index()])
+  observeEvent(dataset_id(), {
+    req(dataset_id())
+    dataset <- loadDataset(dataset_id())
+    data$id <- dataset$id
+    data$name <- dataset$name
+    data$description <- dataset$description
+    data$dataset <- dataset$dataset
     data$doEdit <- TRUE
+    values$reload <- FALSE
   })
   
   observeEvent(create_result$path_dataset(), {
-    if(create_result$path_dataset() == "reset"){
-      output$table <- renderUI(h1(""))
-    }else{
+    if (create_result$path_dataset() == "reset") {
+      output$table <- NULL
+    } else{
       data$dataset <- read.csv(create_result$path_dataset())
       output$table <- renderUI(tableUI(session$ns("dataset")))
     }
-    
   })
+
 }

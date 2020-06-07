@@ -6,10 +6,15 @@ modelsUI <- function (id) {
 models <- function (input, output, session) {
   values <- reactiveValues(show_details = FALSE, reload = FALSE)
   train <- callModule(trainServer, "train")
-  model_id <- callModule(listServer, "list", loadModels, reactive({values$reload}))
-  callModule(model, "details", model_id)
+  model_id <-
+    callModule(listServer, "list", loadModels, reactive({
+      values$reload
+    }))
+  cancel <- callModule(model, "details", reactive({
+    values$id
+  }))
   
-  observeEvent(input$cancel, {
+  observeEvent(cancel(), {
     values$show_details <- FALSE
     values$reload <- TRUE
   })
@@ -18,20 +23,20 @@ models <- function (input, output, session) {
     req(model_id())
     values$show_details <- TRUE
     values$reload <- FALSE
+    values$id <- model_id()
+  })
+  
+  observeEvent(train$do_report(), {
+    req(train$do_report())
+    if (train$do_report()) {
+      values$show_details <- TRUE
+      values$id <- first(loadModels(session$userData$user$id)$id)
+    }
   })
   
   output$models <- renderUI({
     if (values$show_details) {
-      tagList(
-        actionBttn(
-          inputId = session$ns("cancel"),
-          icon = icon("arrow-circle-left"),
-          style = "pill", 
-          color = "warning",
-          size = "xs"
-        ),
-        hr(),
-        modelUI(session$ns("details")))
+      modelUI(session$ns("details"))
     } else{
       tagList(tabsetPanel(
         tabPanel("Modelos",

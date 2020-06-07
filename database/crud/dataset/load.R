@@ -10,7 +10,7 @@ loadDatasets <- function(id) {
     )
   tryCatch({
     query <-
-      sprintf("select * from Dataset where user_id= '%s' order by id DESC",
+      sprintf("select id, dataset, name, description from Dataset where user_id= '%s' order by id DESC",
               id)
     response <- dbGetQuery(db, query)
   }, error = function(e) {

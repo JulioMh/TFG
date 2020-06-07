@@ -62,6 +62,3 @@ options(mysql = list(
 ),
 encoding = 'UTF-8')
 databaseName <- "db"
-
-insurance <- read.csv("database/files/1/datasets/0.120885063661262/0.csv")
-
