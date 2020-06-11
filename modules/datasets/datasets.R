@@ -7,7 +7,7 @@ datasetUI <- function (id) {
              br(),
              uiOutput(ns("mode"))),
     tabPanel(
-      "New dataset",
+      "Nuevo conjunto de datos",
       br(),
       sidebarPanel(datasetFormUI(ns("new"))),
       mainPanel(uiOutput(ns("table")))
@@ -45,7 +45,7 @@ dataset <- function (input, output, session) {
     }))
   
   observeEvent(input$tabsetPanel, {
-    if (input$tabsetPanel == "New dataset") {
+    if (input$tabsetPanel == "Nuevo conjunto de datos") {
       values$reload <- FALSE
     } else{
       values$reload <- TRUE

@@ -1,4 +1,4 @@
-loadModels <- function(id) {
+loadOwnModels <- function(id) {
   db <-
     dbConnect(
       MySQL(),
@@ -31,7 +31,7 @@ loadModels <- function(id) {
   return(response)
 }
 
-loadModel <- function(id) {
+loadNotOwnModels <- function(id){
   db <-
     dbConnect(
       MySQL(),
@@ -42,84 +42,216 @@ loadModel <- function(id) {
       password = options()$mysql$password
     )
   query <-
-    sprintf("select * from Model where id= %s",
-            id)
+    sprintf(
+      "select
+              m.id,
+              m.user_id,
+              m.name,
+              m.description,
+              d.name as dataset,
+              m.target
+            from Model m join Dataset d on m.dataset_id = d.id
+            where
+              m.user_id != %s
+            order by id DESC;",
+      id
+    )
   tryCatch({
     response <- dbGetQuery(db, query)
-    response <- processResponse(response)
   }, error = function(e) {
     stop(safeError(e))
   }, finally =   dbDisconnect(db))
   return(response)
 }
 
-processResponse  <- function(response) {
-  attributes <- list()
-  
-  attributes$name <- response$name
-  attributes$description <- response$description
-  
-  models <- list()
-    
-  models_dirs <- response$models
-  models_dirs <- unlist(strsplit(models_dirs, split = ", "))
-  
-  for(dir in models_dirs){
-    model <- readRDS(dir)
-    models[[model$method]] <- model
-  }
-  
-  preProcess <- list()
-  preProcess$target <- response$target
-
-  preProcess$dummy_model <- readRDS(response$dummy_model)
-   
-  if(response$center_model == ""){
-    preProcess$center_model <- ""
-  }else{
-    preProcess$center_model <- readRDS(response$center_model)
-  }
-  
-  if(response$impute_model == ""){
-    preProcess$impute_model <- ""
-  }else{
-    preProcess$impute_model <- readRDS(response$impute_model)
-  }
-  
-  datasets <- list()
-  dataset_data <- loadDataset(response$dataset_id)
-  
-  trainRowNumbers <-
-    convertStringToMatrix(response$trainRowNumbers)
-  
-  datasets$train <- dataset_data$dataset[trainRowNumbers, ]
-  datasets$test <- dataset_data$dataset[-trainRowNumbers, ]
-  datasets$processed <- datasets$test
-
-  datasets$processed <- prepareDataToPredict(
-    dataset = datasets$processed,
-    impute_model = preProcess$impute_model,
-    dummy_model = preProcess$dummy_model,
-    center_model = preProcess$center_model,
-    target = preProcess$target
-  )
-  
-  datasets$predictions <-
-    doPrediction(models = models, datasets$processed)
-  
-  return(
-    list(
-      attributes = attributes,
-      cols = unlist(strsplit(response$cols, split = ", ")),
-      models = models,
-      preProcess = preProcess,
-      datasets = datasets
+getModels <- function(id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
     )
-  )
+  query <-
+    sprintf("select models, target from Model where id= %s",
+            id)
+  models <- list()
+  
+  tryCatch({
+    response <- dbGetQuery(db, query)
+    
+    models_dirs <- response$models
+    models_dirs <- unlist(strsplit(models_dirs, split = ", "))
+    
+    for(dir in models_dirs){
+      model <- readRDS(dir)
+      models[[model$method]] <- model
+    }
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =   dbDisconnect(db))
+  return(models)
 }
 
+getModelsAttributes <- function(id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf("select name, description from Model where id= %s",
+            id)
+  attributes <- list()
+  
+  tryCatch({
+    response <- dbGetQuery(db, query)
+    
+    attributes$name <- response$name
+    attributes$description <- response$description
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =   dbDisconnect(db))
+  return(attributes)
+}
+
+getModelDataset <- function(id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf("select dataset_id, trainRowNumbers, cols, target from Model where id= %s",
+            id)
+  datasets <- list()
+  
+  tryCatch({
+    response <- dbGetQuery(db, query)
+    
+    dataset_data <- loadDataset(response$dataset_id)
+    
+    trainRowNumbers <-
+      convertStringToMatrix(response$trainRowNumbers)
+    
+    datasets$train <- dataset_data$dataset[trainRowNumbers, ]
+    datasets$test <- dataset_data$dataset[-trainRowNumbers, ]
+    
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =   dbDisconnect(db))
+  return(datasets)
+}
+
+getModelPreds <- function(id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf("select cols from Model where id= %s",
+            id)
+  tryCatch({
+    response <- dbGetQuery(db, query)
+    cols <- unlist(strsplit(response$cols, split = ", "))
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =   dbDisconnect(db))
+  return(cols)
+}
+
+
+getModelTarget <- function(id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf("select target from Model where id= %s",
+            id)
+  
+  tryCatch({
+    response <- dbGetQuery(db, query)
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =   dbDisconnect(db))
+  return(response$target)
+}
+
+getPreModels <- function(id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf("select dummy_model, center_model, impute_model, target from Model where id= %s",
+            id)
+  preProcess <- list()
+  
+  tryCatch({
+    response <- dbGetQuery(db, query)
+    
+    preProcess$target <- response$target
+    
+    preProcess$dummy_model <- readRDS(response$dummy_model)
+    
+    if(response$center_model == ""){
+      preProcess$center_model <- ""
+    }else{
+      preProcess$center_model <- readRDS(response$center_model)
+    }
+    
+    if(response$impute_model == ""){
+      preProcess$impute_model <- ""
+    }else{
+      preProcess$impute_model <- readRDS(response$impute_model)
+    }
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =   dbDisconnect(db))
+  return(preProcess)
+}
 
 convertStringToMatrix <- function(string) {
   rows <- unlist(strsplit(string, split = ", "))
   return(as.matrix(as.numeric(rows)))
 }
+
+
+#   datasets$processed <- datasets$test
+# 
+#   datasets$processed <- prepareDataToPredict(
+#     dataset = datasets$processed,
+#     impute_model = preProcess$impute_model,
+#     dummy_model = preProcess$dummy_model,
+#     center_model = preProcess$center_model,
+#     target = preProcess$target
+#   )
+#   
+#   datasets$predictions <-
+#     doPrediction(models = models, datasets$processed)

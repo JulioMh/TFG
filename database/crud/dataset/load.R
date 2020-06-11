@@ -19,6 +19,29 @@ loadDatasets <- function(id) {
   return(response)
 }
 
+getDataset <- function(id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf("select dataset from Dataset where id= %s",
+            id)
+  tryCatch({
+    response <- dbGetQuery(db, query)
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =  dbDisconnect(db))
+  
+  dataset <- read.csv(response$dataset)
+  return(dataset)
+}
+
 loadDataset <- function(id) {
   db <-
     dbConnect(

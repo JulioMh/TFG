@@ -2,31 +2,75 @@ modelSummaryUI <- function(id) {
   ns <- NS(id)
   tagList(sidebarPanel(basicFormUI(ns("edit")),
                        uiOutput(ns("submit"))),
-          mainPanel(uiOutput(ns("show_btton")),
-                    tabsetPanel(
-                      tabsetPanel("Detalles",
-                                  verbatimTextOutput(ns("compare")))
-                    )))
+          mainPanel(
+            tabsetPanel(
+              id = ns("tabs"),
+              tabPanel(
+                "Resumen",
+                br(),
+                verbatimTextOutput(ns("summary")),
+                verbatimTextOutput(ns("compare")),
+                placeholder = TRUE
+              ),
+              tabPanel("Conjunto de entrenamiento",
+                       br(),
+                       tableUI(ns("train")))
+            ),
+            br(),
+            uiOutput(ns("show_btton"))
+          ))
 }
 
-modelSummary <- function(input, output, session, data, id, reset) {
-  values <- reactiveValues(show_btton = TRUE)
+modelSummary <- function(input, output, session, id) {
+  values <- reactiveValues(show_btton = TRUE, models = NULL)
+  callModule(table, "train", reactive({
+    values$datasets$train
+  }))
+  
+  observeEvent(id, {
+    values$attributes <- getModelsAttributes(id)
+    values$models <- getModels(id)
+    values$target <- getModelTarget(id)
+  })
+  
+  observeEvent(input$tabs, {
+    if (input$tabs == "Conjunto de entrenamiento") {
+      if (is.null(values$datasets)) {
+        values$datasets <- getModelDataset(id)
+      }
+    }
+  })
   
   new_attributes <-
     callModule(basicForm, "edit", reactive({
-      data()$attributes
+      values$attributes
     }),
     reactive({
       NULL
     }))
   
   observeEvent(input$show_tabs, {
-    values$show_btton <- FALSE
+    values$show_btton <- !values$show_btton
   })
   
-  observeEvent(reset(), {
-    req(reset())
-    values$show_btton <- TRUE
+  output$compare <- renderPrint({
+    if (length(values$models) > 1) {
+      summary(resamples(values$models))
+    }
+  })
+  
+  observeEvent(input$show_tabs, {
+    lapply(values$models, function(model) {
+      tab <- tabPanel(title = model$modelInfo$label,
+                      br(),
+                      detailsUI(session$ns(model$method)))
+      appendTab("tabs",
+                tab,
+                select = ifelse(model$method == first(values$models)$method,
+                                TRUE,
+                                FALSE))
+      callModule(details, model$method, model)
+    })
   })
   
   output$show_btton <- renderUI({
@@ -66,7 +110,7 @@ modelSummary <- function(input, output, session, data, id, reset) {
       inputId = "confirm",
       type = "warning",
       title = "¿Estas seguro?",
-      text = "Este proceso tardará varios minutos"
+      text = "Puedes volver a cambiar estos datos mas adelante"
     )
   })
   
@@ -77,10 +121,10 @@ modelSummary <- function(input, output, session, data, id, reset) {
         list(name = new_attributes$name(),
              description = new_attributes$description())
       tryCatch({
-        editModel(attributes, id())
+        editModel(attributes, id)
         sendSweetAlert(
           session = session,
-          title = "Listo !!",
+          title = "Listo",
           text = "Los datos han sido guardados",
           type = "success"
         )
@@ -96,16 +140,22 @@ modelSummary <- function(input, output, session, data, id, reset) {
     }
   })
   
-  output$compare <-
-    renderPrint({
-      if (length(data()$models) > 1) {
-        summary(resamples(data()$models))
-      } else{
-        first(data()$models)
-      }
+  output$summary <-
+    renderText({
+      req(values$models)
+      paste0(
+        "Objetivo: ",
+        values$target,
+        "\n",
+        "Tipo: ",
+        first(values$models)$modelType,
+        "\n",
+        "Métodos: ",
+        paste(lapply(values$models, function(model) {
+          if (is.list(model)) {
+            model$modelInfo$label
+          }
+        }), collapse = ", ")
+      )
     })
-  
-  return(reactive({
-    input$show_tabs
-  }))
 }

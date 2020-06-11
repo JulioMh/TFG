@@ -1,25 +1,28 @@
 useModelUI <- function(id) {
   ns <- NS(id)
-  tagList(sidebarPanel(
-    selectDatasetUI(ns("dataset")),
-    uiOutput(ns("submit"))
-  ),
-  mainPanel(tableUI(ns("result"))))
+  tagList(sidebarPanel(selectDatasetUI(ns("dataset")),
+                       uiOutput(ns("submit"))),
+          mainPanel(tableUI(ns("result"))))
 }
 
-useModel <- function(input, output, session, data) {
+useModel <- function(input, output, session, model_id) {
   values <-
     reactiveValues()
-  callModule(table, "result", selected$dataset)
+  
+  observeEvent(model_id, {
+    values$cols = getModelPreds(model_id)
+  })
   
   selected <- callModule(selectDataset, "dataset", reactive({
     values$availableDatasets
   }))
   
+  callModule(table, "result", reactive({
+    values$dataset
+  }))
+  
   output$submit <- renderUI({
-    validate(
-      need(selected$id(), "Selecciona un dataset")
-    )
+    validate(need(selected$id(), "Selecciona un dataset"))
     
     return(div(
       style = "text-align: center;",
@@ -32,8 +35,9 @@ useModel <- function(input, output, session, data) {
     ))
   })
   
-  observeEvent(selected$dataset, {
-    if(!availableToPredict(data()$cols, selected$dataset)){
+  observeEvent(values$dataset, {
+    if (!availableToPredict(values$cols, values$dataset)) {
+      values$dataset <- selected$dataset()
       sendSweetAlert(
         session = session,
         title = "Información",
@@ -43,16 +47,20 @@ useModel <- function(input, output, session, data) {
     }
   })
   
-  observeEvent(selected$reload(),{
-      values$availableDatasets <-
-        getAvailableDatasetsToPredict(data()$cols,
-                                      session$userData$user$id)  
+  observeEvent(selected$dataset(), {
+    values$dataset <- selected$dataset()
   })
   
-  observeEvent(data(), {
-    req(data())
+  
+  observeEvent(values$cols, {
     values$availableDatasets <-
-      getAvailableDatasetsToPredict(data()$cols,
+      getAvailableDatasetsToPredict(values$cols,
+                                    session$userData$user$id)
+  })
+  
+  observeEvent(selected$reload(), {
+    values$availableDatasets <-
+      getAvailableDatasetsToPredict(values$cols,
                                     session$userData$user$id)
   })
   
@@ -67,17 +75,43 @@ useModel <- function(input, output, session, data) {
   
   observeEvent(input$confirm, {
     if (isTRUE(input$confirm)) {
-      processed_dataset <- prepareDataToPredict(
-        dataset = selected$dataset,
-        impute_model = data()$preProcess$impute_model,
-        dummy_model = data()$preProcess$dummy_model,
-        center_model = data()$preProcess$center_model,
-        target = data()$preProcess$target
+      sendSweetAlert(
+        session = session,
+        title = "Preparando datos...",
+        closeOnClickOutside = FALSE,
+        type = "info",
+        btn_labels = NA,
+        showCloseButton = FALSE
       )
-      for (model in isolate(data()$model)) {
+      tryCatch({
+        values$pre = getPreModels(model_id)
+        
+        processed_dataset <- prepareDataToPredict(
+          dataset = values$dataset,
+          impute_model = values$pre$impute_model,
+          dummy_model = values$pre$dummy_model,
+          center_model = values$pre$center_model,
+          target = values$pre$target
+        )
+        closeSweetAlert(session)
+      },
+      error = function(cond) {
+        sendSweetAlert(
+          session = session,
+          title = "Hay un problema con los datos...",
+          text = cond,
+          type = "error"
+        )
+      })
+      
+      if(is.null(values$models)){
+        values$models <- getModels(model_id) 
+      }
+
+      for (model in values$models) {
         tryCatch({
           pred <- predict(model, processed_dataset)
-          selected$dataset[[model$method]] <- pred
+          values$dataset[[model$method]] <- pred
         }, error = function(cond) {
           sendSweetAlert(
             session = session,

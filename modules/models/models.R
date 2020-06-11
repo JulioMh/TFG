@@ -1,42 +1,52 @@
 modelsUI <- function (id) {
   ns <- NS(id)
-  uiOutput(ns("models"))
+  uiOutput(ns("mode"))
 }
 
 models <- function (input, output, session) {
-  values <- reactiveValues(show_details = FALSE, reload = FALSE)
-  train <- callModule(trainServer, "train")
+  values <- reactiveValues(show_details = FALSE, reload = FALSE, count = 0)
+
+  train_id <- callModule(trainServer, "train")
   model_id <-
     callModule(listServer, "list", loadModels, reactive({
       values$reload
     }))
-  cancel <- callModule(model, "details", reactive({
-    values$id
-  }))
   
-  observeEvent(cancel(), {
-    values$show_details <- FALSE
+  observeEvent(input$cancel, {
+    values$show_details <- !values$show_details
     values$reload <- TRUE
   })
   
   observeEvent(model_id(), {
     req(model_id())
-    values$show_details <- TRUE
-    values$reload <- FALSE
+    values$count <- values$count + 1
     values$id <- model_id()
+    values$show_details <- !values$show_details
+    values$reload <- FALSE
+    callModule(model, paste0("model-", values$id, "-", values$count), values$id)
+  })
+
+  observeEvent(train_id(), {
+    req(train_id())
+    values$show_details <- !values$show_details
+    values$id <- train_id()
+    values$reload <- FALSE
+    callModule(model, paste0("model-", values$id), values$id)
   })
   
-  observeEvent(train$do_report(), {
-    req(train$do_report())
-    if (train$do_report()) {
-      values$show_details <- TRUE
-      values$id <- first(loadModels(session$userData$user$id)$id)
-    }
-  })
-  
-  output$models <- renderUI({
+  output$mode <- renderUI({
     if (values$show_details) {
-      modelUI(session$ns("details"))
+      tagList(
+        actionBttn(
+          inputId = session$ns("cancel"),
+          icon = icon("arrow-circle-left"),
+          style = "pill",
+          color = "warning",
+          size = "xs"
+        ),
+        hr(),
+        modelUI(session$ns(paste0("model-", values$id, "-", values$count))) 
+      )
     } else{
       tagList(tabsetPanel(
         tabPanel("Modelos",

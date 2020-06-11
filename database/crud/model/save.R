@@ -34,10 +34,14 @@ saveModel <- function(models,
   )
 
   tryCatch({
-    dbGetQuery(db, query)
+    rs <- dbSendQuery(db, query)
+    dbClearResult(rs)
+    id <- dbGetQuery(db, "select last_insert_id();")[1,1]
   }, error = function(e) {
     stop(safeError(e))
   }, finally = dbDisconnect(db))  
+  
+  return(id)
 }
 
 editModel <- function(new_attributes, id) {
