@@ -3,10 +3,12 @@ modelsUI <- function (id) {
   uiOutput(ns("mode"))
 }
 
-models <- function (input, output, session, load) {
-  values <- reactiveValues(show_details = FALSE, reload = FALSE, count = 0)
-
-  train_id <- callModule(trainServer, "train")
+models <- function (input, output, session, load, train_id) {
+  values <-
+    reactiveValues(show_details = FALSE,
+                   reload = FALSE,
+                   count = 0)
+  
   model_id <-
     callModule(listServer, "list", load, reactive({
       values$reload
@@ -17,22 +19,32 @@ models <- function (input, output, session, load) {
     values$reload <- TRUE
   })
   
+  observeEvent(session$userData$user$deleted_model, {
+    if (isTRUE(session$userData$user$deleted_model)) {
+      values$show_details <- !values$show_details
+      values$reload <- TRUE
+    }
+  })
+  
   observeEvent(model_id(), {
     req(model_id())
     values$count <- values$count + 1
     values$id <- model_id()
     values$show_details <- !values$show_details
     values$reload <- FALSE
-    callModule(model, paste0("model-", values$id, "-", values$count), values$id)
+    callModule(model,
+               paste0("model-", values$id, "-", values$count),
+               values$id)
   })
-
+  
   observeEvent(train_id(), {
-    req(train_id())
     values$count <- values$count + 1
     values$id <- train_id()
-    values$show_details <- !values$show_details
     values$reload <- FALSE
-    callModule(model, paste0("model-", values$id, "-", values$count), values$id)
+    values$show_details <- TRUE
+    callModule(model,
+               paste0("model-", values$id, "-", values$count),
+               values$id)
   })
   
   output$mode <- renderUI({
@@ -45,18 +57,14 @@ models <- function (input, output, session, load) {
           color = "warning",
           size = "xs"
         ),
-        hr(),
-        modelUI(session$ns(paste0("model-", values$id, "-", values$count))) 
+        br(),
+        br(),
+        modelUI(session$ns(
+          paste0("model-", values$id, "-", values$count)
+        ))
       )
     } else{
-      tagList(tabsetPanel(
-        tabPanel("Modelos",
-                 br(),
-                 listUI(session$ns("list"))),
-        tabPanel("Entrena a un nuevo modelo",
-                 br(),
-                 trainUI(session$ns("train")))
-      ))
+      listUI(session$ns("list"))
     }
   })
 }

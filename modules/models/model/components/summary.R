@@ -1,6 +1,7 @@
 modelSummaryUI <- function(id) {
   ns <- NS(id)
-  uiOutput(ns("mode"))
+  tagList(uiOutput(ns("show_btton")),
+          uiOutput(ns("mode")))
 }
 
 modelSummary <- function(input, output, session, model_id) {
@@ -9,7 +10,8 @@ modelSummary <- function(input, output, session, model_id) {
     reactiveValues(
       show_btton = TRUE,
       models = NULL,
-      attributes = getModelsAttributes(model_id)
+      attributes = getModelsAttributes(model_id),
+      reload_follow_btt = FALSE
     )
   
   new_attributes <-
@@ -24,36 +26,44 @@ modelSummary <- function(input, output, session, model_id) {
     if (session$userData$user$id == getModelOwner(model_id)) {
       tagList(
         br(),
-        sidebarPanel(modelFormUI(ns("edit")),
-                     uiOutput(ns("submit"))),
-        mainPanel(
-          verbatimTextOutput(ns("summary")),
-          verbatimTextOutput(ns("compare")),
+        sidebarPanel(
+          modelFormUI(ns("edit")),
+          uiOutput(ns("submit")),
           br(),
-          uiOutput(ns("show_btton"))
-        )
+          br(),
+          actionBttn(
+            inputId = ns("delete"),
+            label = "Eliminar modelo",
+            style = "fill",
+            color = "danger",
+            size = "xs"
+          )
+        ),
+        
+        mainPanel(verbatimTextOutput(ns("summary")),
+                  verbatimTextOutput(ns("compare")), )
       )
     } else{
       if (length(values$models) > 1) {
-        tagList(
-          br(),
-          fluidRow(
-            column(4,
-                   verbatimTextOutput(ns("attributes")),
-                   verbatimTextOutput(ns("summary"))),
-            column(8, verbatimTextOutput(ns("compare")))
-          ),
-          br(),
-          uiOutput(ns("show_btton"))
-        )  
-      }else{
+        tagList(br(),
+                fluidRow(
+                  column(4,
+                         verbatimTextOutput(ns(
+                           "attributes"
+                         )),
+                         verbatimTextOutput(ns("summary"))),
+                  column(8, verbatimTextOutput(ns("compare")))
+                ),
+                br(),
+                uiOutput(ns("follow_bttn")))
+      } else{
         tagList(
           br(),
           verbatimTextOutput(ns("attributes")),
           verbatimTextOutput(ns("summary")),
           br(),
-          uiOutput(ns("show_btton"))
-        ) 
+          uiOutput(ns("follow_bttn"))
+        )
       }
     }
   })
@@ -81,11 +91,12 @@ modelSummary <- function(input, output, session, model_id) {
   output$show_btton <- renderUI({
     if (values$show_btton) {
       tagList(
+        br(),
         actionBttn(
           inputId = ns("show_tabs"),
           label = "Ver en detalle...",
           style = "jelly",
-          color = "success",
+          color = "primary",
           size = "xs"
         ),
         br(),
@@ -138,6 +149,87 @@ modelSummary <- function(input, output, session, model_id) {
       title = "¿Estas seguro?",
       text = "Puedes volver a cambiar estos datos mas adelante"
     )
+  })
+  
+  observeEvent(input$delete, {
+    confirmSweetAlert(
+      session = session,
+      inputId = "confirm_delete",
+      type = "warning",
+      title = "¿Estas seguro?",
+      text = "Esta acción es irreversible"
+    )
+  })
+  
+  observeEvent(input$confirm_delete, {
+    if (isTRUE(input$confirm_delete)) {
+      tryCatch({
+        deleteModel(model_id)
+        session$userData$user$deleted_model <- TRUE
+        sendSweetAlert(session = session,
+                       title = "Listo",
+                       type = "success")
+      },
+      error = function(cond) {
+        sendSweetAlert(
+          session = session,
+          title = "Se ha encontrado un problema...",
+          text = cond,
+          type = "error"
+        )
+      })
+    }
+  })
+  
+  output$follow_bttn <- renderUI({
+    values$reload_follow_btt
+    if (isFollower(model_id, session$userData$user$id)) {
+      actionBttn(
+        inputId = ns("unfollow"),
+        label = "Dejar de seguir",
+        style = "minimal",
+        color = "danger",
+        size = "xs"
+      )
+    } else{
+      actionBttn(
+        inputId = ns("follow"),
+        label = "Guardar modelo",
+        style = "minimal",
+        color = "success",
+        size = "xs"
+      )
+    }
+  })
+  
+  observeEvent(input$unfollow, {
+    tryCatch({
+      unfollowModel(model_id, session$userData$user$id)
+      values$reload_follow_btt <- !values$reload_follow_btt
+    },
+    error = function(cond) {
+      sendSweetAlert(
+        session = session,
+        title = "Se ha encontrado un problema...",
+        text = cond,
+        type = "error"
+      )
+    })
+  })
+  
+  observeEvent(input$follow, {
+    tryCatch({
+      followModel(model_id, session$userData$user$id)
+      values$reload_follow_btt <- !values$reload_follow_btt
+    },
+    error = function(cond) {
+      sendSweetAlert(
+        session = session,
+        title = "Se ha encontrado un problema...",
+        text = cond,
+        type = "error"
+      )
+    })
   })
   
   observeEvent(model_id, {

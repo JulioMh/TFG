@@ -31,6 +31,71 @@ loadOwnModels <- function(id) {
   return(response)
 }
 
+loadSavedModels <- function(id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf(
+      "select
+              m.id,
+              m.user_id,
+              m.name,
+              m.description,
+              d.name as dataset,
+              m.target
+            from Model m left join Model_User mu on m.id = mu.model_id
+            join Dataset d on m.dataset_id = d.id
+            where
+              mu.user_id = %s
+            order by id DESC;",
+      id
+    )
+  tryCatch({
+    response <- dbGetQuery(db, query)
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =   dbDisconnect(db))
+  return(response)
+}
+
+isFollower <- function(model_id, user_id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf(
+      "select
+            mu.id
+            from Model_User mu
+            where
+              mu.user_id = %s
+              and mu.model_id = %s
+            order by id DESC;",
+      user_id,
+      model_id
+    )
+  tryCatch({
+    response <- dbGetQuery(db, query)
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =   dbDisconnect(db))
+  return(isTRUE(response$id >0))
+}
+
+
 loadNotOwnModels <- function(id){
   db <-
     dbConnect(
@@ -53,6 +118,7 @@ loadNotOwnModels <- function(id){
             from Model m join Dataset d on m.dataset_id = d.id
             where
               m.user_id != %s
+              and m.isPublic = 1
             order by id DESC;",
       id
     )
@@ -106,15 +172,15 @@ getModelsAttributes <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select name, description from Model where id= %s",
+    sprintf("select name, description, isPublic from Model where id= %s",
             id)
   attributes <- list()
   
   tryCatch({
     response <- dbGetQuery(db, query)
-    
     attributes$name <- response$name
     attributes$description <- response$description
+    attributes$isPublic <- response$isPublic
   }, error = function(e) {
     stop(safeError(e))
   }, finally =   dbDisconnect(db))
@@ -173,6 +239,28 @@ getModelPreds <- function(id){
     stop(safeError(e))
   }, finally =   dbDisconnect(db))
   return(cols)
+}
+
+getModelRootPath <- function(id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf("select rootPath from Model where id= %s",
+            id)
+  
+  tryCatch({
+    response <- dbGetQuery(db, query)
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =   dbDisconnect(db))
+  return(response$rootPath)
 }
 
 getModelOwner <- function(id){

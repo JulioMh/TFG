@@ -29,7 +29,6 @@ source("views/guest/modules/auth/logIn.R")
 source("views/guest/guest.R")
 
 source("modules/datasets/components/dataset.R")
-source("modules/datasets/components/pickerDataset.R")
 
 source("modules/datasets/funcs/editDataset.R")
 source("modules/datasets/funcs/uploadDataset.R")

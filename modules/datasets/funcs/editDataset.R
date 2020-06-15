@@ -1,8 +1,6 @@
 editDatasetUI <- function(id) {
   ns <- NS(id)
-  tagList(sidebarPanel(
-    basicFormUI(ns("form")),
-    uiOutput(ns("submit")),
+  tagList(
     actionBttn(
       inputId = ns("cancel"),
       icon = icon("arrow-circle-left"),
@@ -10,11 +8,27 @@ editDatasetUI <- function(id) {
       color = "warning",
       size = "xs"
     ),
-  ),
-  mainPanel(datasetUI(ns("dataset"))))
+    br(),
+    br(),
+    sidebarPanel(
+      basicFormUI(ns("form")),
+      uiOutput(ns("submit")),
+      br(),
+      actionBttn(
+        inputId = ns("delete"),
+        label = "Eliminar dataset",
+        style = "fill",
+        color = "danger",
+        size = "xs"
+      ),
+    ),
+    mainPanel(datasetUI(ns("dataset")))
+  )
 }
 
 editDatasetServer <- function(input, output, session, dataset_id) {
+  values <- reactiveValues(cancel = 0)
+  
   attributes <-
     callModule(basicForm, "form", reactive({
       req(dataset_id())
@@ -49,10 +63,55 @@ editDatasetServer <- function(input, output, session, dataset_id) {
     )
   })
   
+  observeEvent(input$delete, {
+    if (isRelated(dataset_id())) {
+      sendSweetAlert(
+        session = session,
+        title = "Este datset tiene modelos asociados",
+        text = "Para eliminarlo debes eliminar primero los modelos que lo usan.",
+        type = "info"
+      )
+    } else{
+      confirmSweetAlert(
+        session = session,
+        inputId = "confirm_delete",
+        type = "warning",
+        title = "¿Estas seguro?",
+        text = "Esta acción es irreversible"
+      )
+    }
+  })
+  
+  observeEvent(input$confirm_delete, {
+    if (isTRUE(input$confirm_delete)) {
+      tryCatch({
+        deleteDataset(dataset_id())
+        values$cancel <- values$cancel + 1
+        sendSweetAlert(session = session,
+                       title = "Listo",
+                       type = "success")
+      },
+      error = function(cond) {
+        sendSweetAlert(
+          session = session,
+          title = "Se ha encontrado un problema...",
+          text = cond,
+          type = "error"
+        )
+      })
+    }
+  })
+  
+  observeEvent(input$cancel, {
+    values$cancel <- input$cancel
+  })
+  
   observeEvent(input$confirm, {
     if (isTRUE(input$confirm)) {
       tryCatch({
-        editDataset(dataset_id(), attributes$name(), attributes$description())
+        editDataset(dataset_id(),
+                    attributes$name(),
+                    attributes$description())
         sendSweetAlert(
           session = session,
           title = "Listo!!",
@@ -70,5 +129,5 @@ editDatasetServer <- function(input, output, session, dataset_id) {
       })
     }
   })
-  return(reactive(input$cancel))
+  return(reactive(values$cancel))
 }

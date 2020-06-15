@@ -51,6 +51,7 @@ selectDataset <- function(input, output, session, preds) {
     if (isTRUE(input$switch)) {
       uploadDatasetUI(ns("upload"))
     } else{
+      values$datasets <- loadDatasets(session$userData$user$id)
       tagList(
         pickerInput(
           inputId = ns("dataset_id"),

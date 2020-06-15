@@ -14,6 +14,7 @@ modelUI <- function(id) {
 }
 
 model <- function(input, output, session, model_id) {
+  session$userData$user$deleted_model <- FALSE
   ns <- session$ns
   values <- reactiveValues()
   

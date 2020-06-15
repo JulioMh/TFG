@@ -25,7 +25,7 @@ uploadDatasetServer <- function(input, output, session) {
   output$submit <- renderUI({
     validate(
       need(attributes$name() != "", "Introduce un nombre"),
-      need(!is.null(input$csv), "Carga un conjunto de datos")
+      need(!is.null(values$path), "Carga un conjunto de datos")
     )
     
     return(div(
@@ -44,6 +44,7 @@ uploadDatasetServer <- function(input, output, session) {
   })
   
   observeEvent(values$done, {
+    reset("csv")
     values$path <- NULL
   })
   

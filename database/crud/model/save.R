@@ -18,10 +18,11 @@ saveModel <- function(models,
     )
   
   dirs <- saveModelFiles(models, user_id)
-
+  rootPath <- dirs$root
+  dirs$root <- NULL
   query <- sprintf(
-    "INSERT INTO Model (name, description, target, user_id, models, %s,dataset_id, trainRowNumbers, cols, isPublic)
-    VALUES ('%s', '%s', '%s', %s, '%s','%s', %s, '%s', '%s', %s)",
+    "INSERT INTO Model (name, description, target, user_id, models, %s,dataset_id, trainRowNumbers, cols, isPublic, rootPath)
+    VALUES ('%s', '%s', '%s', %s, '%s','%s', %s, '%s', '%s', %s, '%s')",
     paste(names(tail(dirs, n = 3)), collapse = ", "),
     name,
     description,
@@ -32,9 +33,10 @@ saveModel <- function(models,
     dataset_id,
     indexs, 
     paste(cols, collapse =", "),
-    ifelse(isTRUE(isPublic), 1, 0)
+    ifelse(isTRUE(isPublic), 1, 0),
+    rootPath
   )
-
+  
   tryCatch({
     rs <- dbSendQuery(db, query)
     dbClearResult(rs)
@@ -44,6 +46,84 @@ saveModel <- function(models,
   }, finally = dbDisconnect(db))  
   
   return(id)
+}
+
+followModel <- function(model_id, user_id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <- sprintf(
+    "INSERT INTO Model_User (model_id, user_id) values (%s, %s)",
+    model_id,
+    user_id
+  )
+  
+  tryCatch({
+    dbGetQuery(db, query)
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally = dbDisconnect(db))  
+}
+
+unfollowModel <- function(model_id, user_id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <- sprintf(
+    "DELETE FROM Model_User where user_id = %s and model_id = %s",
+    user_id,
+    model_id
+  )
+  
+  tryCatch({
+    dbGetQuery(db, query)
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally = dbDisconnect(db))  
+}
+
+deleteModel <- function(model_id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  delete_model <- sprintf(
+    "DELETE FROM Model where id = %s",
+    model_id
+  )
+  
+  delete_relations <- sprintf(
+    "DELETE FROM Model_User where model_id = %s",
+    model_id
+  )
+  
+  rootPath <- getModelRootPath(model_id)
+  
+  tryCatch({
+    dbGetQuery(db, delete_relations)
+    dbGetQuery(db, delete_model)
+    
+    unlink(rootPath, recursive = TRUE)
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally = dbDisconnect(db)) 
 }
 
 editModel <- function(new_attributes, isPublic, id) {
@@ -90,6 +170,7 @@ saveModelFiles <-
     }
     
     dirs <- list()
+    dirs$root <- model_dir
     index = 1
     while (index <= length(models)) {
       name <- names(models[index])
