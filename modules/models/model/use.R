@@ -1,23 +1,20 @@
 useModelUI <- function(id) {
   ns <- NS(id)
-  tagList(sidebarPanel(selectDatasetUI(ns("dataset")),
-                       uiOutput(ns("submit"))),
-          mainPanel(tableUI(ns("result"))))
+  fluidRow(column(3, wellPanel(selectDatasetUI(ns("dataset")),
+                  uiOutput(ns("submit")))),
+           column(9, datasetUI(ns("result"))))
 }
 
 useModel <- function(input, output, session, model_id) {
   values <-
-    reactiveValues()
+    reactiveValues(cols = getModelPreds(model_id))
   
-  observeEvent(model_id, {
-    values$cols = getModelPreds(model_id)
-  })
+  selected <-
+    callModule(selectDataset,
+               "dataset",
+               reactive(values$cols))
   
-  selected <- callModule(selectDataset, "dataset", reactive({
-    values$availableDatasets
-  }))
-  
-  callModule(table, "result", reactive({
+  callModule(dataset, "result", reactive({
     values$dataset
   }))
   
@@ -35,9 +32,8 @@ useModel <- function(input, output, session, model_id) {
     ))
   })
   
-  observeEvent(values$dataset, {
-    if (!availableToPredict(values$cols, values$dataset)) {
-      values$dataset <- selected$dataset()
+  observeEvent(selected$dataset(), {
+    if (!availableToPredict(values$cols, selected$dataset())) {
       sendSweetAlert(
         session = session,
         title = "Información",
@@ -45,23 +41,7 @@ useModel <- function(input, output, session, model_id) {
         type = "info"
       )
     }
-  })
-  
-  observeEvent(selected$dataset(), {
     values$dataset <- selected$dataset()
-  })
-  
-  
-  observeEvent(values$cols, {
-    values$availableDatasets <-
-      getAvailableDatasetsToPredict(values$cols,
-                                    session$userData$user$id)
-  })
-  
-  observeEvent(selected$reload(), {
-    values$availableDatasets <-
-      getAvailableDatasetsToPredict(values$cols,
-                                    session$userData$user$id)
   })
   
   observeEvent(input$submit, {
@@ -104,10 +84,10 @@ useModel <- function(input, output, session, model_id) {
         )
       })
       
-      if(is.null(values$models)){
-        values$models <- getModels(model_id) 
+      if (is.null(values$models)) {
+        values$models <- getModels(model_id)
       }
-
+      
       for (model in values$models) {
         tryCatch({
           pred <- predict(model, processed_dataset)

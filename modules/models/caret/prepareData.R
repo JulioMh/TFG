@@ -17,7 +17,7 @@ prepareDataForTraining <-
     
     testData <- dataset[-trainRowNumbers, ]
     
-    if (do_pred_na) {
+    if (!is.null(do_pred_na) && do_pred_na) {
       impute_model <- trainImputeModel(trainData)
       trainData <- predictImputeModel(trainData, impute_model)
     } else{

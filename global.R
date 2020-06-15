@@ -28,22 +28,35 @@ source("views/guest/modules/auth/logIn.R")
 
 source("views/guest/guest.R")
 
-source("modules/datasets/form.R")
-source("modules/datasets/datasets.R")
-source("modules/datasets/pickerDataset.R")
-source("modules/datasets/selectDataset.R")
+source("modules/datasets/components/dataset.R")
+source("modules/datasets/components/pickerDataset.R")
+
+source("modules/datasets/funcs/editDataset.R")
+source("modules/datasets/funcs/uploadDataset.R")
+
+source("modules/datasets/containers/datasets.R")
+source("modules/datasets/containers/selectDataset.R")
+
 source("modules/models/train/train.R")
+source("modules/models/train/setUpTrain.R")
 source("modules/models/train/advanceMode.R")
-source("modules/models/models.R")
+
+source("modules/models/containers/models.R")
+
 source("modules/models/model/model.R")
-source("modules/models/model/summary.R")
-source("modules/models/model/details.R")
 source("modules/models/model/use.R")
-source("modules/list.R")
-source("modules/table.R")
-source("modules/basicForm.R")
+source("modules/models/model/components/modelForm.R")
+source("modules/models/model/components/summary.R")
+source("modules/models/model/components/details.R")
+
+source("modules/basic/list.R")
+source("modules/basic/table.R")
+source("modules/basic/form.R")
 
 source("views/user.R")
+
+source("helper/getPickerList.R")
+source("helper/getPreds.R")
 
 source("database/crud/dataset/save.R")
 source("database/crud/dataset/load.R")
@@ -61,3 +74,12 @@ options(mysql = list(
 ),
 encoding = 'UTF-8')
 databaseName <- "db"
+
+################################
+# LIST
+################################
+methods_choices <- list(
+  "Random Forest" = getListForPickerMethod("Random Forest"),
+  "Neural Network" = getListForPickerMethod("Neural Network"),
+  "Tree-Based Model" = getListForPickerMethod("Tree-Based Model")
+)

@@ -1,4 +1,4 @@
-saveDataset <- function(data) {
+uploadDataset <- function(name, description, path, user_id) {
   db <-
     dbConnect(
       MySQL(),
@@ -8,30 +8,45 @@ saveDataset <- function(data) {
       user = options()$mysql$user,
       password = options()$mysql$password
     )
-  res <- TRUE
-  if(data$id==""){
-    data$id <- NULL
-    data$dataset <- saveDatasetFile(data$dataset, data$user_id)
-    query <- sprintf(
-      "INSERT INTO Dataset (%s) VALUES ('%s')",
-      paste(names(data), collapse = ", "),
-      paste(data, collapse = "', '")
+  dataset <- saveDatasetFile(path, user_id)
+  query <- sprintf(
+    "INSERT INTO Dataset (name, description, dataset, user_id) VALUES ('%s', '%s', '%s', %s)",
+    name,
+    description,
+    dataset,
+    user_id
+  )
+  tryCatch({
+    dbGetQuery(db, query)
+  }, error = function(e) {
+    res <- safeError(e)
+    stop(safeError(e))
+  }, finally = dbDisconnect(db))
+}
+
+editDataset <- function(id, name, description) {
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
     )
-  }else{
-    query <- sprintf(
-      "UPDATE Dataset SET name = '%s', description = '%s' where id = %s",
-      data$name, data$description, data$id
-    )
-  }
+  query <-
+    sprintf("UPDATE Dataset SET name = '%s', description = '%s' where id = %s",
+            name,
+            description,
+            id)
+  
   
   tryCatch({
     dbGetQuery(db, query)
   }, error = function(e) {
     res <- safeError(e)
     stop(safeError(e))
-  }, finally = dbDisconnect(db)) 
-  
-  return(res)
+  }, finally = dbDisconnect(db))
 }
 
 saveDatasetFile <- function(file_path, user_id) {

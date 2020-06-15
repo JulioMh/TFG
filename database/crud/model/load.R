@@ -175,6 +175,27 @@ getModelPreds <- function(id){
   return(cols)
 }
 
+getModelOwner <- function(id){
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  query <-
+    sprintf("select user_id from Model where id= %s",
+            id)
+  
+  tryCatch({
+    response <- dbGetQuery(db, query)
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally =   dbDisconnect(db))
+  return(response$user_id)
+}
 
 getModelTarget <- function(id){
   db <-
@@ -241,17 +262,3 @@ convertStringToMatrix <- function(string) {
   rows <- unlist(strsplit(string, split = ", "))
   return(as.matrix(as.numeric(rows)))
 }
-
-
-#   datasets$processed <- datasets$test
-# 
-#   datasets$processed <- prepareDataToPredict(
-#     dataset = datasets$processed,
-#     impute_model = preProcess$impute_model,
-#     dummy_model = preProcess$dummy_model,
-#     center_model = preProcess$center_model,
-#     target = preProcess$target
-#   )
-#   
-#   datasets$predictions <-
-#     doPrediction(models = models, datasets$processed)

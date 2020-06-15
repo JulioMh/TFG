@@ -5,7 +5,8 @@ saveModel <- function(models,
                       user_id,
                       dataset_id,
                       indexs,
-                      cols) {
+                      cols,
+                      isPublic) {
   db <-
     dbConnect(
       MySQL(),
@@ -19,8 +20,8 @@ saveModel <- function(models,
   dirs <- saveModelFiles(models, user_id)
 
   query <- sprintf(
-    "INSERT INTO Model (name, description, target, user_id, models, %s,dataset_id, trainRowNumbers, cols)
-    VALUES ('%s', '%s', '%s', %s, '%s','%s', %s, '%s', '%s')",
+    "INSERT INTO Model (name, description, target, user_id, models, %s,dataset_id, trainRowNumbers, cols, isPublic)
+    VALUES ('%s', '%s', '%s', %s, '%s','%s', %s, '%s', '%s', %s)",
     paste(names(tail(dirs, n = 3)), collapse = ", "),
     name,
     description,
@@ -30,7 +31,8 @@ saveModel <- function(models,
     paste(tail(dirs, n = 3), collapse = "', '"),
     dataset_id,
     indexs, 
-    paste(cols, collapse =", ")
+    paste(cols, collapse =", "),
+    ifelse(isTRUE(isPublic), 1, 0)
   )
 
   tryCatch({
@@ -44,7 +46,7 @@ saveModel <- function(models,
   return(id)
 }
 
-editModel <- function(new_attributes, id) {
+editModel <- function(new_attributes, isPublic, id) {
   db <-
     dbConnect(
       MySQL(),
@@ -56,9 +58,10 @@ editModel <- function(new_attributes, id) {
     )
   res <- TRUE
   query <- sprintf(
-    "UPDATE Model set %s
+    "UPDATE Model set %s, isPublic = %s
     WHERE id = %s",
     paste0(names(new_attributes), " = '", new_attributes, "'" , collapse = ", "),
+    isPublic,
     id
   )
   tryCatch({

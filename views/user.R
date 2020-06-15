@@ -11,9 +11,9 @@ userUI <- function(id) {
       tabPanel("MyModels",
                modelsUI(ns("models"))),
       tabPanel("MyDatasets",
-               datasetUI(ns("datasets"))),
+               datasetsUI(ns("datasets"))),
       tabPanel("Community",
-               h2("TODO")),
+               modelsUI(ns("community"))),
       tabPanel("Log out",
                h4("TODO"))
     )
@@ -21,8 +21,7 @@ userUI <- function(id) {
 }
 
 user <- function(input, output, session) {
-  callModule(dataset, "datasets")
-  callModule(models, "models")
-  
-  
+  callModule(datasets, "datasets")
+  callModule(models, "models", loadOwnModels)
+  callModule(models, "community", loadNotOwnModels)
 }

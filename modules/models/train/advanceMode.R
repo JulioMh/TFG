@@ -14,18 +14,14 @@ advanceMode <-
   function(input,
            output,
            session,
-           columns,
-           pred_method) {
+           method,
+           preds) {
     output$pick_method <- renderUI({
       pickerInput(
         inputId = session$ns("methods"),
         label = "Selecciona uno o mas métodos:",
-        choices = list(
-          "Random Forest" = getListForPickerMethod("Random Forest"),
-          "Neural Network" = getListForPickerMethod("Neural Network"),
-          "Tree-Based Model" = getListForPickerMethod("Tree-Based Model")
-        ),
-        selected = pred_method(),
+        choices = methods_choices,
+        selected = method(),
         multiple = TRUE,
         options = list(`live-search` = TRUE,
                        `actions-box` = TRUE)
@@ -37,8 +33,8 @@ advanceMode <-
         pickerInput(
           inputId = session$ns("predictors"),
           label = "Selecciona los predictores:",
-          choices = columns(),
-          selected = columns(),
+          choices = preds(),
+          selected = preds(),
           multiple = TRUE,
           options = list(`live-search` = TRUE,
                          `actions-box` = TRUE)
@@ -73,13 +69,3 @@ advanceMode <-
       )
     )
   }
-
-getListForPickerMethod = function(tag) {
-  raw_methods <- list.filter(getModelInfo(), tag %in% tags)
-  names <- names(raw_methods)
-  methods <- list()
-  for (name in names) {
-    methods[[raw_methods[[name]]$label]] <- name
-  }
-  return(methods)
-}
