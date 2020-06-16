@@ -21,23 +21,29 @@ setUpTrainUI <- function (id) {
   column(6,
          datasetUI(ns("dataset"))),
   column(3,
-         wellPanel(selectDatasetUI(ns("select_dataset")))))
+         wellPanel(selectDatasetUI(
+           ns("select_dataset")
+         ))))
 }
 
 setUpTrain <- function (input, output, session) {
   #VARIABLES
-  values <- reactiveValues()
+  values <- reactiveValues(reload = FALSE)
   
   #MODULES
   attributes <-
-    callModule(modelForm, "form", NULL, reactive(isTRUE(input$confirm)))
+    callModule(modelForm, "form", NULL, reactive(values$reload))
   selected <-
     callModule(selectDataset, "select_dataset", reactive(NULL))
   settings <-
-    callModule(advanceMode,
-               "advance",
-               reactive(values$methods),
-               reactive(values$preds))
+    callModule(
+      advanceMode,
+      "advance",
+      reactive(values$methods),
+      reactive(input$target),
+      selected$dataset,
+      reactive(values$preds)
+    )
   callModule(dataset, "dataset", selected$dataset)
   
   #RENDERS
@@ -82,6 +88,22 @@ setUpTrain <- function (input, output, session) {
     values$preds <- settings$preds()
   })
   
+  observeEvent(input$confirm, {
+    if (isTRUE(input$confirm)) {
+      values$reload <- !values$reload
+    }
+  })
+  
+  observeEvent(input$submit, {
+    confirmSweetAlert(
+      session = session,
+      inputId = "confirm",
+      type = "warning",
+      title = "¿Estas seguro?",
+      text = "Este proceso puede tardar varios minutos"
+    )
+  })
+  
   observeEvent(input$target, {
     values$preds <- getPredsNames(selected$dataset(), input$target)
     values$methods <-
@@ -100,7 +122,7 @@ setUpTrain <- function (input, output, session) {
       methods = reactive(values$methods),
       name = attributes$name,
       description = attributes$description,
-      submit = reactive(input$submit),
+      confirm = reactive(input$confirm),
       target = reactive(input$target),
       isPublic = attributes$isPublic
     )

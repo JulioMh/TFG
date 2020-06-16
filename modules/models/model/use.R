@@ -19,7 +19,7 @@ useModel <- function(input, output, session, model_id) {
   }))
   
   output$submit <- renderUI({
-    validate(need(selected$id(), "Selecciona un dataset"))
+    validate(need(selected$dataset(), "Selecciona un dataset"))
     
     return(div(
       style = "text-align: center;",

@@ -1,9 +1,10 @@
-getListForPickerMethod = function(tag) {
-  raw_methods <- list.filter(getModelInfo(), tag %in% tags)
-  names <- names(raw_methods)
+getListForPickerMethod = function(tag, types) {
+  methods <- list.filter(raw.methods, tag %in% tags)
+  availableMethods <- list.filter(methods, types %in% type)
+  names <- names(availableMethods)
   methods <- list()
   for (name in names) {
-    methods[[raw_methods[[name]]$label]] <- name
+    methods[[availableMethods[[name]]$label]] <- name
   }
   return(methods)
 }

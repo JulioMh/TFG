@@ -8,7 +8,8 @@ uploadDatasetUI <- function(id) {
       accept = c(
         "text/csv",
         "text/comma-separated-values,text/plain",
-        ".csv"
+        ".csv",
+        ".data"
       )
     ),
     basicFormUI(ns("form")),
@@ -16,7 +17,7 @@ uploadDatasetUI <- function(id) {
   )
 }
 
-uploadDatasetServer <- function(input, output, session) {
+uploadDatasetServer <- function(input, output, session, show) {
   values <- reactiveValues()
   
   attributes <-
@@ -41,6 +42,12 @@ uploadDatasetServer <- function(input, output, session) {
   
   observeEvent(input$csv$datapath, {
     values$path <- input$csv$datapath
+  })
+  
+  observeEvent(show(), {
+    if(isFALSE(show())){
+      values$path <- NULL
+    }
   })
   
   observeEvent(values$done, {

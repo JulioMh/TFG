@@ -87,6 +87,8 @@ editDatasetServer <- function(input, output, session, dataset_id) {
       tryCatch({
         deleteDataset(dataset_id())
         values$cancel <- values$cancel + 1
+        session$userData$user$deleted_dataset <-
+          session$userData$user$deleted_dataset + 1
         sendSweetAlert(session = session,
                        title = "Listo",
                        type = "success")

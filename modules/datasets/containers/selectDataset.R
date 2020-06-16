@@ -27,7 +27,7 @@ selectDataset <- function(input, output, session, preds) {
       }
     })
   
-  path <- callModule(uploadDatasetServer, "upload")
+  path <- callModule(uploadDatasetServer, "upload", reactive(isTRUE(input$switch)))
   
   observeEvent(input$info, {
     sendSweetAlert(
@@ -36,6 +36,15 @@ selectDataset <- function(input, output, session, preds) {
       text = "Puedes seleccionar un dataset que ya hayas guardado o cargar uno nuevo desde aquí",
       type = "info"
     )
+  })
+  
+  observeEvent(session$userData$user$deleted_dataset, {
+    if (is.null(preds())) {
+      values$datasets <- loadDatasets(session$userData$user$id)
+    } else{
+      values$datasets <-
+        getAvailableDatasetsToPredict(preds(), session$userData$user$id)
+    }
   })
   
   observeEvent(input$reload, {
@@ -47,11 +56,21 @@ selectDataset <- function(input, output, session, preds) {
     }
   })
   
+  observeEvent(path(), {
+    values$path <- path()
+  })
+  
   output$mode <- renderUI({
     if (isTRUE(input$switch)) {
       uploadDatasetUI(ns("upload"))
     } else{
-      values$datasets <- loadDatasets(session$userData$user$id)
+      values$path <- NULL
+      if (is.null(preds())) {
+        values$datasets <- loadDatasets(session$userData$user$id)
+      } else{
+        values$datasets <-
+          getAvailableDatasetsToPredict(preds(), session$userData$user$id)
+      }
       tagList(
         pickerInput(
           inputId = ns("dataset_id"),
@@ -75,17 +94,23 @@ selectDataset <- function(input, output, session, preds) {
     }
   })
   
-  return(list(id = reactive(input$dataset_id),
-              dataset = reactive({
-                if (isTRUE(input$switch)) {
-                  if (is.null(path())) {
-                    NULL
-                  } else {
-                    read.csv(path())
-                  }
-                } else {
-                  req(input$dataset_id)
-                  getDataset(input$dataset_id)
-                }
-              })))
+  return(list(id = reactive({
+    if (isTRUE(input$switch)) {
+      NULL
+    } else{
+      input$dataset_id
+    }
+  }),
+  dataset = reactive({
+    if (isTRUE(input$switch)) {
+      if (is.null(values$path)) {
+        NULL
+      } else {
+        read.csv(values$path)
+      }
+    } else {
+      req(input$dataset_id)
+      getDataset(input$dataset_id)
+    }
+  })))
 }

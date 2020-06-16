@@ -6,8 +6,7 @@ basicFormUI <- function (id) {
 basicForm <- function (input, output, session, data, reload) {
   values <- reactiveValues()
   
-  observeEvent(reload, {
-    req(reload)
+  observeEvent(reload(), {
     values$reload <- reload()
   })
   

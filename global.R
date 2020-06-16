@@ -12,8 +12,7 @@ library(tidyverse)
 library(caret)
 library(doSNOW)
 library(rlist)
-library(waiter)
-
+library(bcrypt)
 
 ################################
 # MODULES
@@ -23,10 +22,10 @@ source("modules/models/caret/prepareData.R")
 source("modules/models/caret/preProcess.R")
 source("modules/models/caret/predict.R")
 
-source("views/guest/modules/auth/signUp.R")
-source("views/guest/modules/auth/logIn.R")
+source("modules/auth/signUp.R")
+source("modules/auth/logIn.R")
 
-source("views/guest/guest.R")
+source("views/guest.R")
 
 source("modules/datasets/components/dataset.R")
 
@@ -77,8 +76,9 @@ databaseName <- "db"
 ################################
 # LIST
 ################################
-methods_choices <- list(
-  "Random Forest" = getListForPickerMethod("Random Forest"),
-  "Neural Network" = getListForPickerMethod("Neural Network"),
-  "Tree-Based Model" = getListForPickerMethod("Tree-Based Model")
-)
+rf <- list.filter(getModelInfo(), "Random Forest" %in% tags)
+nnt <- list.filter(getModelInfo(), "Neural Network" %in% tags)
+tbm <- list.filter(getModelInfo(), "Tree-Based Model" %in% tags)
+raw.methods <- c(rf, nnt, tbm)
+
+

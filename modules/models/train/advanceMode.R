@@ -15,12 +15,32 @@ advanceMode <-
            output,
            session,
            method,
+           target,
+           dataset,
            preds) {
+    values <- reactiveValues()
+    
+    observeEvent(target(), {
+      if (is.factor(dataset()[[target()]])) {
+        values$method_choices <- list(
+          "Random Forest" = getListForPickerMethod("Random Forest", "Classification"),
+          "Neural Network" = getListForPickerMethod("Neural Network", "Classification"),
+          "Tree-Based Model" = getListForPickerMethod("Tree-Based Model", "Classification")
+        )
+      } else{
+        values$method_choices <- list(
+          "Random Forest" = getListForPickerMethod("Random Forest", "Regression"),
+          "Neural Network" = getListForPickerMethod("Neural Network", "Regression"),
+          "Tree-Based Model" = getListForPickerMethod("Tree-Based Model", "Regression")
+        )
+      }
+    })
+    
     output$pick_method <- renderUI({
       pickerInput(
         inputId = session$ns("methods"),
         label = "Selecciona uno o mas métodos:",
-        choices = methods_choices,
+        choices = values$method_choices,
         selected = method(),
         multiple = TRUE,
         options = list(`live-search` = TRUE,
@@ -33,8 +53,8 @@ advanceMode <-
         pickerInput(
           inputId = session$ns("predictors"),
           label = "Selecciona los predictores:",
-          choices = preds(),
-          selected = preds(),
+          choices = getPredsNames(dataset(), target()),
+          selected = getPredsNames(dataset(), target()),
           multiple = TRUE,
           options = list(`live-search` = TRUE,
                          `actions-box` = TRUE)
@@ -44,7 +64,7 @@ advanceMode <-
     output$pick_to_center <- renderUI({
       pickerInput(
         inputId = session$ns("preds_to_center"),
-        label = "Selecciona los predicores a normalizar:",
+        label = "Selecciona los predictores a normalizar:",
         choices = input$predictors,
         multiple = TRUE,
         options = list(`live-search` = TRUE,

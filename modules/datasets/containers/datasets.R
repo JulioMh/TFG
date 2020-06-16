@@ -16,7 +16,7 @@ datasetsUI <- function (id) {
 
 datasets <- function (input, output, session) {
   values <- reactiveValues(reload = FALSE, show_edit = FALSE)
-  path <- callModule(uploadDatasetServer, "upload")
+  path <- callModule(uploadDatasetServer, "upload", reactive(NULL))
   cancel <- callModule(editDatasetServer, "edit", dataset_id)
   callModule(dataset, "dataset", reactive({
     req(path())

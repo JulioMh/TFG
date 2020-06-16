@@ -13,7 +13,6 @@ modelForm <- function(input, output, session, data, reload){
     callModule(basicForm, "basic", data, reload)
   
   output$privacy_container <- renderUI({
-    print(data()$isPublic)
     switchInput(
       inputId = ns("privacy"),
       size = "mini",

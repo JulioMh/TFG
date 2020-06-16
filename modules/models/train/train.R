@@ -15,17 +15,7 @@ trainServer <- function (input, output, session) {
       saving_model = FALSE,
       done = FALSE
     )
-  
-  observeEvent(settings$submit(), {
-    confirmSweetAlert(
-      session = session,
-      inputId = "confirm",
-      type = "warning",
-      title = "¿Estas seguro?",
-      text = "Este proceso puede tardar varios minutos"
-    )
-  })
-  
+
   observeEvent(state$processing_data, {
     if (state$processing_data) {
       sendSweetAlert(
@@ -149,8 +139,8 @@ trainServer <- function (input, output, session) {
     }
   })
   
-  observeEvent(input$confirm, {
-    if (isTRUE(input$confirm)) {
+  observeEvent(settings$confirm(), {
+    if (isTRUE(settings$confirm())) {
       state$processing_data <- TRUE
     }
   })
