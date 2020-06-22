@@ -31,8 +31,8 @@ saveModel <- function(models,
     paste(head(dirs, n = length(dirs) - 3), collapse = ", "),
     paste(tail(dirs, n = 3), collapse = "', '"),
     dataset_id,
-    indexs, 
-    paste(cols, collapse =", "),
+    indexs,
+    paste(cols, collapse = ", "),
     ifelse(isTRUE(isPublic), 1, 0),
     rootPath
   )
@@ -40,15 +40,15 @@ saveModel <- function(models,
   tryCatch({
     rs <- dbSendQuery(db, query)
     dbClearResult(rs)
-    id <- dbGetQuery(db, "select last_insert_id();")[1,1]
+    id <- dbGetQuery(db, "select last_insert_id();")[1, 1]
   }, error = function(e) {
     stop(safeError(e))
-  }, finally = dbDisconnect(db))  
+  }, finally = dbDisconnect(db))
   
   return(id)
 }
 
-followModel <- function(model_id, user_id){
+followModel <- function(model_id, user_id) {
   db <-
     dbConnect(
       MySQL(),
@@ -58,20 +58,18 @@ followModel <- function(model_id, user_id){
       user = options()$mysql$user,
       password = options()$mysql$password
     )
-  query <- sprintf(
-    "INSERT INTO Model_User (model_id, user_id) values (%s, %s)",
-    model_id,
-    user_id
-  )
+  query <- sprintf("INSERT INTO Model_User (model_id, user_id) values (%s, %s)",
+                   model_id,
+                   user_id)
   
   tryCatch({
     dbGetQuery(db, query)
   }, error = function(e) {
     stop(safeError(e))
-  }, finally = dbDisconnect(db))  
+  }, finally = dbDisconnect(db))
 }
 
-unfollowModel <- function(model_id, user_id){
+unfollowModel <- function(model_id, user_id) {
   db <-
     dbConnect(
       MySQL(),
@@ -81,20 +79,18 @@ unfollowModel <- function(model_id, user_id){
       user = options()$mysql$user,
       password = options()$mysql$password
     )
-  query <- sprintf(
-    "DELETE FROM Model_User where user_id = %s and model_id = %s",
-    user_id,
-    model_id
-  )
+  query <- sprintf("DELETE FROM Model_User where user_id = %s and model_id = %s",
+                   user_id,
+                   model_id)
   
   tryCatch({
     dbGetQuery(db, query)
   }, error = function(e) {
     stop(safeError(e))
-  }, finally = dbDisconnect(db))  
+  }, finally = dbDisconnect(db))
 }
 
-deleteModel <- function(model_id){
+deleteModel <- function(model_id) {
   db <-
     dbConnect(
       MySQL(),
@@ -104,26 +100,39 @@ deleteModel <- function(model_id){
       user = options()$mysql$user,
       password = options()$mysql$password
     )
-  delete_model <- sprintf(
-    "DELETE FROM Model where id = %s",
-    model_id
-  )
+  delete_model <- sprintf("DELETE FROM Model where id = %s",
+                          model_id)
   
-  delete_relations <- sprintf(
-    "DELETE FROM Model_User where model_id = %s",
-    model_id
-  )
   
   rootPath <- getModelRootPath(model_id)
   
   tryCatch({
-    dbGetQuery(db, delete_relations)
+    removeFollowers(model_id)
     dbGetQuery(db, delete_model)
     
     unlink(rootPath, recursive = TRUE)
   }, error = function(e) {
     stop(safeError(e))
-  }, finally = dbDisconnect(db)) 
+  }, finally = dbDisconnect(db))
+}
+
+removeFollowers <- function(model_id) {
+  db <-
+    dbConnect(
+      MySQL(),
+      dbname = databaseName,
+      host = options()$mysql$host,
+      port = options()$mysql$port,
+      user = options()$mysql$user,
+      password = options()$mysql$password
+    )
+  delete_relations <- sprintf("DELETE FROM Model_User where model_id = %s",
+                              model_id)
+  tryCatch({
+    dbGetQuery(db, delete_relations)
+  }, error = function(e) {
+    stop(safeError(e))
+  }, finally = dbDisconnect(db))
 }
 
 editModel <- function(new_attributes, isPublic, id) {
@@ -145,6 +154,9 @@ editModel <- function(new_attributes, isPublic, id) {
     id
   )
   tryCatch({
+    if (isPublic == 0) {
+      removeFollowers(id)
+    }
     dbGetQuery(db, query)
   }, error = function(e) {
     stop(safeError(e))

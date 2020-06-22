@@ -17,10 +17,10 @@ library(bcrypt)
 ################################
 # MODULES
 ################################
-source("modules/models/caret/train.R")
-source("modules/models/caret/prepareData.R")
-source("modules/models/caret/preProcess.R")
-source("modules/models/caret/predict.R")
+source("caret/train.R")
+source("caret/prepareData.R")
+source("caret/preProcess.R")
+source("caret/predict.R")
 
 source("modules/auth/signUp.R")
 source("modules/auth/logIn.R")
@@ -29,23 +29,21 @@ source("views/guest.R")
 
 source("modules/datasets/components/dataset.R")
 
-source("modules/datasets/funcs/editDataset.R")
-source("modules/datasets/funcs/uploadDataset.R")
-
+source("modules/datasets/containers/editDataset.R")
+source("modules/datasets/containers/uploadDataset.R")
 source("modules/datasets/containers/datasets.R")
 source("modules/datasets/containers/selectDataset.R")
 
-source("modules/models/train/train.R")
-source("modules/models/train/setUpTrain.R")
-source("modules/models/train/advanceMode.R")
-
+source("modules/models/containers/train.R")
+source("modules/models/containers/setUpTrain.R")
 source("modules/models/containers/models.R")
+source("modules/models/containers/model.R")
+source("modules/models/containers/use.R")
 
-source("modules/models/model/model.R")
-source("modules/models/model/use.R")
-source("modules/models/model/components/modelForm.R")
-source("modules/models/model/components/summary.R")
-source("modules/models/model/components/details.R")
+source("modules/models/components/advanceMode.R")
+source("modules/models/components/modelForm.R")
+source("modules/models/components/summary.R")
+source("modules/models/components/details.R")
 
 source("modules/basic/list.R")
 source("modules/basic/table.R")
