@@ -81,7 +81,7 @@ trainServer <- function (input, output, session) {
         sendSweetAlert(
           session = session,
           title = "No se han podido entrenar los modelos...",
-          text = cond,
+          text = "Prueba utilizando otro algoritmo de entrenamiento",
           type = "error"
         )
       },

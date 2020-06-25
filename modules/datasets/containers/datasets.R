@@ -20,7 +20,9 @@ datasets <- function (input, output, session) {
   cancel <- callModule(editDatasetServer, "edit", dataset_id)
   callModule(dataset, "dataset", reactive({
     req(path())
-    read.csv(path())
+    if (path() != -1) {
+      read.csv(path())
+    }
   }))
   
   

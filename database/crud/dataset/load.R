@@ -10,7 +10,7 @@ loadDatasets <- function(id) {
     )
   tryCatch({
     query <-
-      sprintf("select id, dataset, name, description from Dataset where user_id= '%s' order by id DESC",
+      sprintf("select id, dataset, name, description from dataset where user_id= '%s' order by id DESC",
               id)
     response <- dbGetQuery(db, query)
   }, error = function(e) {
@@ -30,7 +30,7 @@ getDataset <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select dataset from Dataset where id= %s",
+    sprintf("select dataset from dataset where id= %s",
             id)
   tryCatch({
     response <- dbGetQuery(db, query)
@@ -56,7 +56,7 @@ isRelated <- function(id){
     sprintf(
       "select
             m.id
-            from Model m
+            from model m
             where m.dataset_id = %s
             order by id DESC;",
       id
@@ -80,7 +80,7 @@ getDatasetRootPath <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select rootPath from Dataset where id= %s",
+    sprintf("select rootPath from dataset where id= %s",
             id)
   
   tryCatch({
@@ -103,7 +103,7 @@ getDatasetAttributes <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select name, description from Dataset where id= %s",
+    sprintf("select name, description from dataset where id= %s",
             id)
   tryCatch({
     response <- dbGetQuery(db, query)
@@ -128,7 +128,7 @@ loadDataset <- function(id) {
       password = options()$mysql$password
     )
   query <-
-    sprintf("select * from Dataset where id= %s",
+    sprintf("select * from dataset where id= %s",
             id)
   tryCatch({
     response <- dbGetQuery(db, query)

@@ -12,7 +12,7 @@ library(tidyverse)
 library(caret)
 library(doSNOW)
 library(rlist)
-library(bcrypt)
+library(openssl)
 
 ################################
 # MODULES
@@ -64,7 +64,7 @@ source("database/crud/model/load.R")
 ################################
 options(mysql = list(
   "host" = "127.0.0.1",
-  "port" = 3308,
+  "port" = 3306,
   "user" = "root",
   "password" = "root"
 ),
@@ -78,5 +78,3 @@ rf <- list.filter(getModelInfo(), "Random Forest" %in% tags)
 nnt <- list.filter(getModelInfo(), "Neural Network" %in% tags)
 tbm <- list.filter(getModelInfo(), "Tree-Based Model" %in% tags)
 raw.methods <- c(rf, nnt, tbm)
-
-

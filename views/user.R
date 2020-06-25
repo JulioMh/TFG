@@ -5,7 +5,7 @@ userUI <- function(id) {
     useSweetAlert(),
     
     navbarPage(
-      title = "BestAppEver",
+      title = "Modelando",
       id = ns("user_nav"),
       theme = shinytheme("flatly"),
       tabPanel(

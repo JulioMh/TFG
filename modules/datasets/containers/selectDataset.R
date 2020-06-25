@@ -57,7 +57,12 @@ selectDataset <- function(input, output, session, preds) {
   })
   
   observeEvent(path(), {
-    values$path <- path()
+    if(path()== -1){
+      values$path <- NULL  
+    }else{
+      values$path <- path()
+    }
+    
   })
   
   output$mode <- renderUI({
@@ -104,6 +109,7 @@ selectDataset <- function(input, output, session, preds) {
   dataset = reactive({
     if (isTRUE(input$switch)) {
       if (is.null(values$path)) {
+      
         NULL
       } else {
         read.csv(values$path)

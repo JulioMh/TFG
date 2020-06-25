@@ -44,7 +44,7 @@ logIn <- function(input, output, session) {
     res <-
       performanceLogIn(input$email)
     if(isTRUE(res$id >0)){
-      if (checkpw(input$passwd, res$password)) {
+      if (sha256(input$passwd) == res$password) {
         session$userData$user$id <- res$id
       }else{
         sendSweetAlert(

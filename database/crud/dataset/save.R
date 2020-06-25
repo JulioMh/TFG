@@ -10,7 +10,7 @@ uploadDataset <- function(name, description, path, user_id) {
     )
   dataset <- saveDatasetFile(path, user_id)
   query <- sprintf(
-    "INSERT INTO Dataset (name, description, dataset, user_id, rootPath) VALUES ('%s', '%s', '%s', %s, '%s')",
+    "INSERT INTO dataset (name, description, dataset, user_id, rootPath) VALUES ('%s', '%s', '%s', %s, '%s')",
     name,
     description,
     dataset$dataset_dir,
@@ -36,7 +36,7 @@ deleteDataset <- function(id){
       password = options()$mysql$password
     )
   query <- sprintf(
-    "DELETE FROM Dataset where id = %s",
+    "DELETE FROM dataset where id = %s",
     id
   )
   
@@ -62,7 +62,7 @@ editDataset <- function(id, name, description) {
       password = options()$mysql$password
     )
   query <-
-    sprintf("UPDATE Dataset SET name = '%s', description = '%s' where id = %s",
+    sprintf("UPDATE dataset SET name = '%s', description = '%s' where id = %s",
             name,
             description,
             id)

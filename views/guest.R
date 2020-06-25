@@ -2,14 +2,14 @@ guestUI <- function(id) {
   ns <- NS(id)
   tagList(
     navbarPage(
-      title = "BestAppEver",
+      title = "Modelando",
       theme = shinytheme("flatly"),
       tabPanel(
         "Inicio",
         br(),
         br(),
         HTML(
-          "<h1><center>BIENVENIDO A LA <b>MEJOR</b> APP NUNCA HECHA...</center></h1>"
+          "<h1><center>BIENVENIDO A <b>MODELANDO</b>...</center></h1>"
         ),
         br(),
         hr(),
@@ -19,11 +19,12 @@ guestUI <- function(id) {
         column(width = 12,
                br(), br(), br(), br(),
                wellPanel(
-                 HTML("<h1><b>BestApp</b></h1>"),
+                 HTML("<h1><b>Modelando</b></h1>"),
                  HTML(
-                   "<h4><b>BestApp</b> es un proyecto que anima a todo aquel que trabaje en el campo del medicina a
+                   "<h4><b>Modelando</b> es un proyecto que anima a todo aquel que trabaje en el campo del medicina a
                                     que le de una oportunidad al machine learning y entrene por él mismo un modelo
-                                    con el que poder apoyarse a la hora de sacar conclusiones
+                                    con el que poder entender mejor como se relacionan los datos de los que disponga y 
+                                    conseguir así mejorar sus análisis
                                .</h4>"
                  )
                ))

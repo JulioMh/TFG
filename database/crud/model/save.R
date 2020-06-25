@@ -21,7 +21,7 @@ saveModel <- function(models,
   rootPath <- dirs$root
   dirs$root <- NULL
   query <- sprintf(
-    "INSERT INTO Model (name, description, target, user_id, models, %s,dataset_id, trainRowNumbers, cols, isPublic, rootPath)
+    "INSERT INTO model (name, description, target, user_id, models, %s,dataset_id, trainRowNumbers, cols, isPublic, rootPath)
     VALUES ('%s', '%s', '%s', %s, '%s','%s', %s, '%s', '%s', %s, '%s')",
     paste(names(tail(dirs, n = 3)), collapse = ", "),
     name,
@@ -58,7 +58,7 @@ followModel <- function(model_id, user_id) {
       user = options()$mysql$user,
       password = options()$mysql$password
     )
-  query <- sprintf("INSERT INTO Model_User (model_id, user_id) values (%s, %s)",
+  query <- sprintf("INSERT INTO model_user (model_id, user_id) values (%s, %s)",
                    model_id,
                    user_id)
   
@@ -79,7 +79,7 @@ unfollowModel <- function(model_id, user_id) {
       user = options()$mysql$user,
       password = options()$mysql$password
     )
-  query <- sprintf("DELETE FROM Model_User where user_id = %s and model_id = %s",
+  query <- sprintf("DELETE FROM model_user where user_id = %s and model_id = %s",
                    user_id,
                    model_id)
   
@@ -100,7 +100,7 @@ deleteModel <- function(model_id) {
       user = options()$mysql$user,
       password = options()$mysql$password
     )
-  delete_model <- sprintf("DELETE FROM Model where id = %s",
+  delete_model <- sprintf("DELETE FROM model where id = %s",
                           model_id)
   
   
@@ -126,7 +126,7 @@ removeFollowers <- function(model_id) {
       user = options()$mysql$user,
       password = options()$mysql$password
     )
-  delete_relations <- sprintf("DELETE FROM Model_User where model_id = %s",
+  delete_relations <- sprintf("DELETE FROM model_user where model_id = %s",
                               model_id)
   tryCatch({
     dbGetQuery(db, delete_relations)
@@ -147,7 +147,7 @@ editModel <- function(new_attributes, isPublic, id) {
     )
   res <- TRUE
   query <- sprintf(
-    "UPDATE Model set %s, isPublic = %s
+    "UPDATE model set %s, isPublic = %s
     WHERE id = %s",
     paste0(names(new_attributes), " = '", new_attributes, "'" , collapse = ", "),
     isPublic,

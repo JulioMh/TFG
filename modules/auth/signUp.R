@@ -60,7 +60,7 @@ signUp <- function(input, output, session) {
   observeEvent(input$signup, {
     data <- list(
       "username" = input$userName,
-      "password" = hashpw(input$passwd),
+      "password" = sha256(input$passwd),
       "email" = input$email
     )
     tryCatch({

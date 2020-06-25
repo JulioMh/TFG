@@ -52,7 +52,8 @@ uploadDatasetServer <- function(input, output, session, show) {
   
   observeEvent(values$done, {
     reset("csv")
-    values$path <- NULL
+    values$path <- -1
+    values$done <- FALSE
   })
   
   observeEvent(input$submit, {

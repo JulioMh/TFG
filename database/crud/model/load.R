@@ -13,11 +13,12 @@ loadOwnModels <- function(id) {
       "select
               m.id,
               m.user_id,
-              m.name,
-              m.description,
-              d.name as dataset,
-              m.target
-            from Model m join Dataset d on m.dataset_id = d.id
+              m.name as Nombre,
+              m.description as Descripcion,
+              u.username as Usuario,
+              d.name as Dataset,
+              m.target as Objetivo
+            from model m join dataset d on m.dataset_id = d.id join `user` u on u.id = m.user_id
             where
               m.user_id = %s
             order by id DESC;",
@@ -44,14 +45,15 @@ loadSavedModels <- function(id){
   query <-
     sprintf(
       "select
-              m.id,
+             m.id,
               m.user_id,
-              m.name,
-              m.description,
-              d.name as dataset,
-              m.target
-            from Model m left join Model_User mu on m.id = mu.model_id
-            join Dataset d on m.dataset_id = d.id
+              m.name as Nombre,
+              m.description as Descripcion,
+              u.username as Usuario,
+              d.name as Dataset,
+              m.target as Objetivo
+            from model m left join model_user mu on m.id = mu.model_id join `user` u on u.id = m.user_id
+            join dataset d on m.dataset_id = d.id
             where
               mu.user_id = %s
             order by id DESC;",
@@ -79,7 +81,7 @@ isFollower <- function(model_id, user_id){
     sprintf(
       "select
             mu.id
-            from Model_User mu
+            from model_user mu
             where
               mu.user_id = %s
               and mu.model_id = %s
@@ -111,11 +113,12 @@ loadNotOwnModels <- function(id){
       "select
               m.id,
               m.user_id,
-              m.name,
-              m.description,
-              d.name as dataset,
-              m.target
-            from Model m join Dataset d on m.dataset_id = d.id
+              m.name as Nombre,
+              m.description as Descripcion,
+              u.username as Usuario,
+              d.name as Dataset,
+              m.target as Objetivo
+            from model m join dataset d on m.dataset_id = d.id join `user` u on u.id = m.user_id
             where
               m.user_id != %s
               and m.isPublic = 1
@@ -141,7 +144,7 @@ getModels <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select models, target from Model where id= %s",
+    sprintf("select models, target from model where id= %s",
             id)
   models <- list()
   
@@ -172,7 +175,7 @@ getModelsAttributes <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select name, description, isPublic from Model where id= %s",
+    sprintf("select name, description, isPublic from model where id= %s",
             id)
   attributes <- list()
   
@@ -198,7 +201,7 @@ getModelDataset <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select dataset_id, trainRowNumbers, cols, target from Model where id= %s",
+    sprintf("select dataset_id, trainRowNumbers, cols, target from model where id= %s",
             id)
   datasets <- list()
   
@@ -230,7 +233,7 @@ getModelPreds <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select cols from Model where id= %s",
+    sprintf("select cols from model where id= %s",
             id)
   tryCatch({
     response <- dbGetQuery(db, query)
@@ -252,7 +255,7 @@ getModelRootPath <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select rootPath from Model where id= %s",
+    sprintf("select rootPath from model where id= %s",
             id)
   
   tryCatch({
@@ -274,7 +277,7 @@ getModelOwner <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select user_id from Model where id= %s",
+    sprintf("select user_id from model where id= %s",
             id)
   
   tryCatch({
@@ -296,7 +299,7 @@ getModelTarget <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select target from Model where id= %s",
+    sprintf("select target from model where id= %s",
             id)
   
   tryCatch({
@@ -318,7 +321,7 @@ getPreModels <- function(id){
       password = options()$mysql$password
     )
   query <-
-    sprintf("select dummy_model, center_model, impute_model, target from Model where id= %s",
+    sprintf("select dummy_model, center_model, impute_model, target from model where id= %s",
             id)
   preProcess <- list()
   
