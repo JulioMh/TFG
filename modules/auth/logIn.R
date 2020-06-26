@@ -33,7 +33,7 @@ logIn <- function(input, output, session) {
       style = "text-align: center;",
       actionBttn(
         inputId = session$ns("login"),
-        label = "Iniciar sesión", 
+        label = "Iniciar sesión",
         style = "stretch",
         color = "success"
       ),
@@ -43,22 +43,12 @@ logIn <- function(input, output, session) {
   observeEvent(input$login, {
     res <-
       performanceLogIn(input$email)
-    if(isTRUE(res$id >0)){
-      if (sha256(input$passwd) == res$password) {
-        session$userData$user$id <- res$id
-      }else{
-        sendSweetAlert(
-          session = session,
-          title = "Contraseña incorrecta",
-          type = "error"
-        )
-      } 
-    }else{
-      sendSweetAlert(
-        session = session,
-        title = "Este correo aún no ha sido registrado",
-        type = "error"
-      )
+    if (isTRUE(res$id > 0) && sha256(input$passwd) == res$password) {
+      session$userData$user$id <- res$id
+    } else{
+      sendSweetAlert(session = session,
+                     title = "Email o contraseña incorrecta",
+                     type = "error")
     }
   })
 }

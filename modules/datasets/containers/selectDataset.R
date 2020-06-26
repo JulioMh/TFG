@@ -109,7 +109,6 @@ selectDataset <- function(input, output, session, preds) {
   dataset = reactive({
     if (isTRUE(input$switch)) {
       if (is.null(values$path)) {
-      
         NULL
       } else {
         read.csv(values$path)

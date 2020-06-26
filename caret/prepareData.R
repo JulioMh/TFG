@@ -7,6 +7,12 @@ prepareDataForTraining <-
     dataset <-
       dataset %>% select(all_of(preds), all_of(target))
     
+    if('?' %in% dataset[[target]]){
+      dataset <- dataset[!dataset[[target]] %in% c("?"), ]
+      
+      dataset[[target]] <- factor(dataset[[target]]) 
+    }
+    
     trainRowNumbers <-
       createDataPartition(dataset[[target]],
                           times = 1,
@@ -32,6 +38,7 @@ prepareDataForTraining <-
     } else{
       center_model <- ""
     }
+    
     return(
       list(
         trainData = trainData,
@@ -49,7 +56,7 @@ prepareDataToPredict <-
            dummy_model,
            center_model,
            target) {
-
+    
     if (impute_model != "") {
       dataset <- predictImputeModel(dataset, impute_model)
     }

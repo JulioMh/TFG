@@ -1,8 +1,12 @@
 useModelUI <- function(id) {
   ns <- NS(id)
-  fluidRow(column(3, wellPanel(selectDatasetUI(ns("dataset")),
-                  uiOutput(ns("submit")))),
-           column(9, datasetUI(ns("result"))))
+  fluidRow(column(3, wellPanel(selectDatasetUI(ns(
+    "dataset"
+  )),
+  uiOutput(ns(
+    "submit"
+  )))),
+  column(9, datasetUI(ns("result"))))
 }
 
 useModel <- function(input, output, session, model_id) {
@@ -19,7 +23,7 @@ useModel <- function(input, output, session, model_id) {
   }))
   
   output$submit <- renderUI({
-    validate(need(selected$dataset(), "Selecciona un dataset"))
+    validate(need(selected$id(), "Selecciona un dataset"))
     
     return(div(
       style = "text-align: center;",
@@ -32,14 +36,16 @@ useModel <- function(input, output, session, model_id) {
     ))
   })
   
-  observeEvent(selected$dataset(), {
-    if (!availableToPredict(values$cols, selected$dataset())) {
-      sendSweetAlert(
-        session = session,
-        title = "Información",
-        text = "Dataset no compatible con este modelo",
-        type = "info"
-      )
+  observeEvent(selected$dataset(), ignoreNULL = FALSE, {
+    if (!is.null(selected$dataset())) {
+      if (!availableToPredict(values$cols, selected$dataset())) {
+        sendSweetAlert(
+          session = session,
+          title = "Información",
+          text = "Dataset no compatible con este modelo",
+          type = "info"
+        )
+      }
     }
     values$dataset <- selected$dataset()
   })

@@ -78,6 +78,7 @@ trainServer <- function (input, output, session) {
         state$saving_model <- TRUE
       },
       error = function(cond) {
+        print(cond)
         sendSweetAlert(
           session = session,
           title = "No se han podido entrenar los modelos...",

@@ -38,6 +38,11 @@ details <-
         target <- getModelTarget(model_id)
         pre <- getPreModels(model_id)
         
+        if('?' %in% datasets$test[[target]]){
+          datasets$test <- datasets$test[!datasets$test[[target]] %in% c("?"), ]
+          datasets$test[[target]] <- factor(datasets$test[[target]])
+        }
+        
         processed_dataset <- prepareDataToPredict(
           dataset = datasets$test,
           impute_model = pre$impute_model,
